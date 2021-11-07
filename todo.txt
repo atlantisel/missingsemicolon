@@ -2,7 +2,7 @@
 >                                                     <
 >   BEFORE SUBMISSION:                                <
 >   * Add "missingsemicolon_" before every filename   <
->   * Remove temp folder                              <
+>   * Remove temp and vscode folder                   <
 >                                                     <
  ^^^^^^^^^^^^^^^^^^ ＩＭＰＯＲＴＡＮＴ ^^^^^^^^^^^^^^^^^^
 
