@@ -2,28 +2,31 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-
+#include <vector>
+#include "Classes.h"
 
 using namespace std;
 
 int main() {
-    string fileName = "Food List.csv";
-    const int fieldCount = 4;
-    ifstream menu(fileName);
-    
+    ifstream menu("Food List.csv");
+    vector<Item> items;
+
     string line;
-    while (getline(menu, line)) {
+    getline(menu, line);
+    while (getline(menu, line)) { 
         string field;
-        string fields[fieldCount];
+        string fields[4];
         stringstream ss(line);
+        if (line.back() == '\r') line.pop_back(); 
         for (int i = 0; getline(ss, field, ','); i++) {
             fields[i] = field;
         }
-        for (string str : fields) {
-            cout << str << " | ";
-        }
-        
-    } 
+        items.push_back(Item(fields));
+    }
     
-    return 0; 
+    for (Item item : items) {
+        cout << item.display() << endl;
+    }
+    
+    return 0;
 }
