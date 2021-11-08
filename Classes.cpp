@@ -13,23 +13,23 @@ Item::Item(string fields[]) {
     deliverable = fields[3] == "yes" ? true : false;
 }
 
-string Item::getStallName(){
+string Item::getStallName() {
     return stallName;
 }
 
-string Item::getItemName(){
+string Item::getItemName() {
     return itemName;
 }
 
-double Item::getPrice(){
+double Item::getPrice() {
     return price;
 }
 
-bool Item::isDeliverable(){
+bool Item::isDeliverable() {
     return deliverable;
 }
 
-string Item::display(){
+string Item::display() {
     stringstream ss; 
     ss << fixed << setprecision(2) << price;
     string str = "Stall: " + stallName + "\n"
@@ -37,4 +37,28 @@ string Item::display(){
                + "Price: " + ss.str()  + "\n"
                + (deliverable ? "" : "Not ") + "Deliverable\n";
     return str;
+}
+
+Sentence::Sentence() {}
+
+void Sentence::read(string str) {
+    istringstream iss(str);
+    while (iss) {
+        string word;
+        iss >> word;
+        sentence.push_back(word);
+    }
+
+    // Remove trailing \n
+    sentence.pop_back();
+
+    // Clean punctuation
+    for (string& word : sentence)
+        while (!isalnum(word.back()))
+            word.pop_back();
+}
+
+void Sentence::print() {
+    for (string str : sentence)
+        cout << str << endl;
 }

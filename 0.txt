@@ -23,14 +23,14 @@
 • Validation / nlp
 § Interface (if we have time)
 § Voice recognition (if we have time) 
-• 
-
-
-do you have experience using external lib?
-not rly lmao i dont hv much experience at all tbh
-
 
 == development notes ==
+
+• struct "session" to keep track of user properties
+    • mentioned dishes/preferences
+    • mentioned area
+
+
 
 "Participants identify the shortcomings and improvements that can be made on the chatbot" / Scalability
 

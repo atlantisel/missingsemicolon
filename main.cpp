@@ -1,32 +1,62 @@
+#include <exception>
 #include <fstream>
 #include <iostream>
 #include <sstream>
 #include <string>
 #include <vector>
 #include "Classes.h"
-
 using namespace std;
 
-int main() {
-    ifstream menu("Food List.csv");
-    vector<Item> items;
+struct {
+    vector<string> mentionedStalls;
+} session;
 
-    string line;
-    getline(menu, line);
-    while (getline(menu, line)) { 
-        string field;
-        string fields[4];
-        stringstream ss(line);
-        if (line.back() == '\r') line.pop_back(); 
-        for (int i = 0; getline(ss, field, ','); i++) {
-            fields[i] = field;
+bool conversation();
+string prompt(string);
+vector<Item> items;
+
+int main() {    
+    try {
+        // Initialise items
+        string fileName = "Food List.csv";
+
+        ifstream menu(fileName);
+        if (menu.is_open()) {
+            cout << fileName << " opened successfully." << endl;
+        } else {
+            throw runtime_error("\"" + fileName + "\" cannot be opened.");
         }
-        items.push_back(Item(fields));
+        
+        string line;
+        getline(menu, line);
+        while (getline(menu, line)) { 
+            string field;
+            string fields[4];
+            stringstream ss(line);
+            if (line.back() == '\r') line.pop_back(); 
+            for (int i = 0; getline(ss, field, ','); i++)
+                fields[i] = field;
+            items.push_back(Item(fields));
+        }
+        
+        // Conversation
+        Sentence sentence;
+        sentence.read(prompt("Hi, I'm Ken. How can I help you out today?"));
+        sentence.print();
     }
-    
-    for (Item item : items) {
-        cout << item.display() << endl;
+
+    catch (const exception& e) {
+        cerr << "Exception: " << e.what() << endl;
+        return -1;
     }
     
     return 0;
+}
+
+string prompt(string str) {
+    cout << str << endl;
+    cout << ">> ";
+    string response;
+    getline(cin, response);
+    return response;
 }
