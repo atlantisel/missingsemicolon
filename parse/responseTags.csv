@@ -1,0 +1,15 @@
+deliver,delivery
+delivery,delivery
+open,operation
+start,operation
+when,question;time
+where,question;location
+location,location
+time,time
+what,question
+food,food
+how,question;how
+price,price
+recommendation,food;recommendation
+cheap,food;recommendation;price;cheap
+cheapest,food;recommendation;price;cheap
