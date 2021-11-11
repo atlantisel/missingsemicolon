@@ -4,6 +4,7 @@
 #include <sstream>
 #include <string>
 #include "Classes.h"
+#include "Functions.h"
 
 using namespace std;
 
@@ -20,27 +21,27 @@ Item::Item(string line) {
     getline(ss, meatType, ',');
 }
 
-string Item::get_stallName() {
+string Item::_stallName() {
     return stallName;
 }
 
-string Item::get_itemName() {
+string Item::_itemName() {
     return itemName;
 }
 
-float Item::get_price() {
+float Item::_price() {
     return price;
 }
 
-bool Item::is_deliverable() {
+bool Item::_deliverable() {
     return deliverable;
 }
 
-string Item::get_dishType() {
+string Item::_dishType() {
     return dishType;
 }
 
-string Item::get_meatType() {
+string Item::_meatType() {
     return meatType;
 }
 
@@ -76,11 +77,11 @@ void Sentence::read(string str) {
             word.pop_back();
 }
 
-void Sentence::key(string str) {
+void Sentence::addKey(string str) {
     keywords.push_back(str);
 }
 
-string Sentence::get_string() {
+string Sentence::str() {
     return sentence_string;
 }
 
@@ -94,5 +95,5 @@ void Sentence::printnl() {
 }
 
 bool Sentence::is(string str) {
-    return sentence_string == str;
+    return ciequal(str, sentence_string);
 }

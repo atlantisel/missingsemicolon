@@ -20,6 +20,7 @@ struct {
 bool conversation();
 string prompt(string);
 ifstream chk_openFile(string);
+void generateList(string, vector<string>);
 void test(string);
 
 Sentence sentence;
@@ -47,13 +48,13 @@ int main(int argc, char** argv) {
             
             // Generate lists
             for (Item item : items) {
-                if (!isMember(item.get_stallName(), stallName_list))
-                    stallName_list.push_back(item.get_stallName());
-                if (!isMember(item.get_dishType(), dishType_list))
-                    dishType_list.push_back(item.get_dishType());
-                if (!isMember(item.get_meatType(), meatType_list))
-                    meatType_list.push_back(item.get_meatType());
+                generateList(item._stallName(), stallName_list);
+                generateList(item._dishType(),  dishType_list);
+                generateList(item._meatType(),  meatType_list);
             }
+            sort(stallName_list.begin(), stallName_list.end());
+            sort(dishType_list.begin(),  dishType_list.end());
+            sort(meatType_list.begin(),  meatType_list.end());
         }
 
         {   // Initialise keywords and tags
@@ -126,10 +127,9 @@ bool conversation() {
 
     // Parse keywords
     for (string word : sentence.get()) {
-        if (isMember(word, keyword_list))
-            sentence.key(word);
+        if (match(word, keyword_list))
+            sentence.addKey(word);
     }
-    
 
     if (sentence.is("bye")) { // temp end condition
         cout << "Goodbye. Have a nice day!" << endl;
@@ -155,6 +155,11 @@ ifstream chk_openFile(string fileName) {
         throw runtime_error("\"" + fileName + "\" cannot be opened.");
     }
     return file;
+}
+
+void generateList(string str, vector<string> v) {
+    if (!match(str, v))
+        v.push_back(str);
 }
 
 void test(string arg) {
