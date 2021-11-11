@@ -39,6 +39,7 @@ public:
     void printnl();
 
     bool is(std::string);
+    bool match(std::vector<std::string>);
 
 private:
     std::string sentence_string;
