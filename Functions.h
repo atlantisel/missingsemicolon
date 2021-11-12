@@ -4,10 +4,12 @@
 #include <string>
 #include <vector>
 
-bool match(std::string, std::vector<std::string>);
+bool inside(std::string, std::vector<std::string>);
 
 // case-insensitive comparison
 bool ciequal(std::string, std::string);
+
+bool isnumstr(std::string);
 
 // constexpr functions are implicitly inline
 constexpr unsigned int hash(const char *str, int off = 0) {
