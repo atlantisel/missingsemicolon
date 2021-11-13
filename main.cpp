@@ -14,9 +14,10 @@ using namespace std;
 
 bool     conversation();
 string   prompt      (string = "");
+void     menupg      (vector<Item>, int);
+void     menu        (vector<Item>);
 ifstream chk_openFile(string);
 void     generateList(string, vector<string>&);
-void     menu        (vector<Item>);
 bool     test        (int, char**);
 
 struct {
@@ -187,60 +188,45 @@ string prompt(string str) {
     return response;
 }
 
-ifstream chk_openFile(string fileName) {
-    ifstream file(fileName);
-    if (file.is_open()) {
-        cout << fileName << " opened successfully." << endl;
-    } else {
-        throw runtime_error("\"" + fileName + "\" cannot be opened.");
-    }
-    return file;
-}
-
-void generateList(string str, vector<string>& v) {
-    if (!inside(str, v))
-        v.push_back(str);
-}
-
-void menupg(vector<Item> items, int pg = 1) {
-    int off   = (pg - 1) * 10 + 1;
-    int range = items.size() - off + 1;
-
-    for (int i = off; i < off + (range < 10 ? range : 10); i++)
-        items[i - 1].list(i);
-}
-
 void menu(vector<Item> items) {
-    // Always display first page
-    menupg(items);
+    int  off, range;
+    int  cur  = 1;
+    int  tot  = (items.size() - 1) / 10 + 1;
+    bool pgin = false;
 
-    if (items.size() > 10) {
-        int  cur   = 1;
-        int  tot   = (items.size() - 1) / 10 + 1;
-        bool pgin  = false;
-        auto pgnum = [&]() {
-            cout << "Page " << cur << "/" << tot << endl;
-        };
-        
-        pgnum();
+    auto menupg = [&]() {
+        off = (cur - 1) * 10 + 1;
+        range = items.size() - off + 1;
+        for (int i = off; i < off + (range < 10 ? range : 10); i++)
+            items[i - 1].list(i);
+        cout << "Page " << cur << "/" << tot << endl;
+        pgin = false;
+    };
 
+    menupg(); // Always display first page
+
+    if (items.size() <= 10) {
+        while ([&]() -> bool {
+            sentence.read(prompt());
+            // to add
+            return true;
+        }());
+    } else {
         while ([&]() -> bool {
             sentence.read(prompt());
             if (sentence.contains("cancel")) {
                 return false;
             } else if (sentence.contains(vector<string>({"previous", "prev", "back", "left"}))) {
                 if (cur != 1) {
-                    menupg(items, --cur);
-                    pgnum();
-                    pgin = false;
+                    --cur;
+                    menupg();
                 } else {
                     cout << "No previous page!" << endl;
                 }
             } else if (sentence.contains(vector<string>({"next", "forward", "right"}))) {
                 if (cur != tot) {
-                    menupg(items, ++cur);
-                    pgnum();
-                    pgin = false;
+                    ++cur;
+                    menupg();
                 } else {
                     cout << "No next page!" << endl;
                 }
@@ -251,9 +237,7 @@ void menu(vector<Item> items) {
                         pgin = true;
                     } else {
                         cur = stoi(*it);
-                        menupg(items, cur);
-                        pgnum();
-                        pgin = false;
+                        menupg();
                     }
                 };
 
@@ -300,6 +284,21 @@ void menu(vector<Item> items) {
             return true;
         }());
     }
+}
+
+ifstream chk_openFile(string fileName) {
+    ifstream file(fileName);
+    if (file.is_open()) {
+        cout << fileName << " opened successfully." << endl;
+    } else {
+        throw runtime_error("\"" + fileName + "\" cannot be opened.");
+    }
+    return file;
+}
+
+void generateList(string str, vector<string>& v) {
+    if (!inside(str, v))
+        v.push_back(str);
 }
 
 bool test(int argc, char** argv) {

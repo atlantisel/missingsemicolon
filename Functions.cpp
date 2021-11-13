@@ -26,7 +26,7 @@ bool isnumstr(string str) {
     for (char chr : str) {
         if (!isnumber(chr))
             return false;
-    };
+    }
     return true;
 }
 
