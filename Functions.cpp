@@ -24,7 +24,7 @@ bool ciequal(string a, string b) {
 
 bool isnumstr(string str) {
     for (char chr : str) {
-        if (!isnumber(chr))
+        if (!isdigit(chr)) // changed to isdigit due to isnumber is MacOS specific
             return false;
     }
     return true;

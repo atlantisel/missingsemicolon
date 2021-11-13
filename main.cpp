@@ -18,6 +18,7 @@ void     menupg      (vector<Item>, int);
 void     menu        (vector<Item>);
 ifstream chk_openFile(string);
 void     generateList(string, vector<string>&);
+void     getResponse (string);
 bool     test        (int, char**);
 
 struct {
@@ -132,9 +133,20 @@ bool conversation() {
     */
 
     // Parse keywords
-    for (string word : sentence.get()) {
+    /*for (string word : sentence.get()) {
         if (inside(word, lists.keywords))
             sentence.addKey(word);
+    }*/
+
+    for (string word : sentence.get()) {
+        // for pair 
+        for (auto pair : lists.tags)
+        // if the word in the sentence matches the keyword
+            if (word == pair.first) {
+                // for tag in the tags, get response
+                for (string tag : pair.second)
+                    getResponse(tag);
+            }
     }
 
     //  pseudocode
@@ -160,15 +172,6 @@ bool conversation() {
         // gives recommendation
         cout << "Here's our menu.\nType page x to go to it.\nType numbers to select meal." << endl;
         menu(items());
-        /*showMenu(1);
-        sentence.read(prompt(""));
-        while (!sentence.is("bye")){
-            if (sentence.contains("page"))
-                showMenu(1);
-                // showMenu()
-            // adds food procedure
-        }
-        sentence.println();*/
     }
 
     if (sentence.is("bye")) { // temp end condition
@@ -299,6 +302,21 @@ ifstream chk_openFile(string fileName) {
 void generateList(string str, vector<string>& v) {
     if (!inside(str, v))
         v.push_back(str);
+}
+
+void getResponse(string _tag) {
+    char *tag = &_tag[0];
+    switch(::hash(tag)) {
+        case ::hash("operation"):
+            cout << "We are open from 8am-4pm on weekdays." << endl;
+            break;
+        case ::hash("location"):
+            cout << "We are located at Taylor's University." << endl;
+            break;
+        default:
+            cout << "<" << _tag << "> tag has yet to have a response." << endl;
+    }
+    cout << endl;
 }
 
 bool test(int argc, char** argv) {

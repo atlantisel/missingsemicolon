@@ -46,6 +46,7 @@ public:
     bool is      (std::string);
     bool contains(std::string);
     bool contains(std::vector<std::string>);
+    void search  (std::vector<std::pair<std::string, std::vector<std::string>>>);
 
     std::vector<std::string>::iterator begin();
     std::vector<std::string>::iterator end();
