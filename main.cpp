@@ -197,6 +197,11 @@ void menu(vector<Item> items) {
     int  tot  = (items.size() - 1) / 10 + 1;
     bool pgin = false;
 
+    const vector<string> keys_cancel   = {"cancel"};
+    const vector<string> keys_previous = {"previous", "prev", "back", "left"};
+    const vector<string> keys_next     = {"next", "forward", "right"};
+    const vector<string> keys_page     = {"page", "pg", "go", "to", "goto"};
+
     auto menupg = [&]() {
         off = (cur - 1) * 10 + 1;
         range = items.size() - off + 1;
@@ -206,27 +211,60 @@ void menu(vector<Item> items) {
         pgin = false;
     };
 
+    auto iteminbounds = [&](int i) {
+        if (i < off || i >= off + (range < 10 ? range : 10)) {
+                cout << "Item not on page!" << endl;
+                return true;
+            } else {
+                result = items[i - 1];
+                return false;
+            }
+    };
+
     menupg(); // Always display first page
 
     if (items.size() <= 10) {
         while ([&]() -> bool {
             sentence.read(prompt());
-            // to add
+            if (sentence.contains(keys_cancel)) {
+                return false;
+            } else if (sentence.contains(keys_previous)) {
+                cout << "No previous page!" << endl;
+            } else if (sentence.contains(keys_next)) {
+                cout << "No next page!" << endl;
+            } else {
+                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), isnumstr);
+                bool number = it != sentence.end();
+
+                if (sentence.contains(keys_page)) {
+                    if (number && stoi(*it) == 1) {
+                        menupg();
+                    } else {
+                        cout << "No other pages to go to!" << endl;
+                    }
+                } else if (number) {
+                    return iteminbounds(stoi(*it));
+                } else {
+                    // TO IMPLEMENT SEARCH ROUTINE
+                    cout << "Search" << endl;
+                    return false;
+                }
+            }
             return true;
         }());
     } else {
         while ([&]() -> bool {
             sentence.read(prompt());
-            if (sentence.contains("cancel")) {
+            if (sentence.contains(keys_cancel)) {
                 return false;
-            } else if (sentence.contains(vector<string>({"previous", "prev", "back", "left"}))) {
+            } else if (sentence.contains(keys_previous)) {
                 if (cur != 1) {
                     --cur;
                     menupg();
                 } else {
                     cout << "No previous page!" << endl;
                 }
-            } else if (sentence.contains(vector<string>({"next", "forward", "right"}))) {
+            } else if (sentence.contains(keys_next)) {
                 if (cur != tot) {
                     ++cur;
                     menupg();
@@ -247,7 +285,7 @@ void menu(vector<Item> items) {
                 vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), isnumstr);
                 bool number = it != sentence.end();
 
-                if (sentence.contains(vector<string>({"page", "pg", "go", "to"}))) {
+                if (sentence.contains(keys_page)) {
                     if (!number) {
                         cout << "Which page would you like to go to?" << endl;
                         pgin = true;
@@ -258,14 +296,7 @@ void menu(vector<Item> items) {
                     if (pgin) {
                         pginbounds(it);
                     } else {
-                        int off   = (cur - 1) * 10 + 1;
-                        int range = items.size() - off + 1;
-                        if (stoi(*it) < off || stoi(*it) >= off + (range < 10 ? range : 10)) {
-                            cout << "Item not on page!" << endl;
-                        } else {
-                            result = items[stoi(*it) - 1];
-                            return false;
-                        }
+                        return iteminbounds(stoi(*it));
                     }
                 } else {
                     // TO IMPLEMENT SEARCH ROUTINE
@@ -361,7 +392,7 @@ bool test(int argc, char** argv) {
 
         case ::hash("menu"):
             // Display menu and result
-            menu(items());
+            menu(vector(items.begin(), items.begin() + 10));
             result.display();
             return true;
 
