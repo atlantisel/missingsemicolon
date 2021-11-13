@@ -5,7 +5,6 @@
 #include <iomanip>
 #include <sstream>
 #include <string>
-#include <utility>      // pair
 #include <vector>
 #include "Classes.h"
 #include "Functions.h"
@@ -14,12 +13,14 @@ using namespace std;
 
 bool     conversation();
 string   prompt      (string = "");
-void     menupg      (vector<Item>, int);
+void     answer      (string);
 void     menu        (vector<Item>);
-ifstream chk_openFile(string);
-void     generateList(string, vector<string>&);
-void     getResponse (string);
 bool     test        (int, char**);
+
+namespace init {
+    ifstream chk_openFile(string);
+    void     generateList(string, vector<string>&);
+};
 
 struct {
     bool           needsDelivery;
@@ -28,23 +29,14 @@ struct {
     vector<string> mentionedTypes;
 } session;
 
-struct {
-    vector<string> stallNames;
-    vector<string> dishTypes;
-    vector<string> meatTypes;
-    vector<string> keywords;
-    vector<pair<string, vector<string>>> tags;
-} lists;
-
 struct Items {
     // Initialise menu
     Items() {
-        ifstream file(chk_openFile("Food List.csv"));
+        ifstream file(init::chk_openFile("Food List.csv"));
         string line;
         getline(file, line);
         while (getline(file, line)) {
-            if (line.back() == '\r')
-                line.pop_back();
+            if (line.back() == '\r') line.pop_back();
             items.push_back(Item(line));
         }
     }
@@ -57,6 +49,22 @@ private:
     vector<Item> items;
 } items;
 
+struct Label {
+    Label(string _keyword, vector<string> _tags)
+        : keyword(_keyword), tags(_tags) {
+    }
+    string         keyword;
+    vector<string> tags;
+};
+
+namespace lists {
+    vector<string> stallNames;
+    vector<string> dishTypes;
+    vector<string> meatTypes;
+    vector<string> keywords;
+    vector<Label>  labels;
+};
+
 Sentence     sentence;
 static bool  start = true;
 Item         result;
@@ -68,36 +76,33 @@ int main(int argc, char** argv) {
         {   
             // Generate lists
             for (Item item : items) {
-                generateList(item._stallName(), lists.stallNames);
-                generateList(item._dishType(),  lists.dishTypes);
-                generateList(item._meatType(),  lists.meatTypes);
+                init::generateList(item._stallName(), lists::stallNames);
+                init::generateList(item._dishType(),  lists::dishTypes);
+                init::generateList(item._meatType(),  lists::meatTypes);
             }
-            sort(lists.stallNames.begin(), lists.stallNames.end());
-            sort(lists.dishTypes.begin(),  lists.dishTypes.end());
-            sort(lists.meatTypes.begin(),  lists.meatTypes.end());
+            sort(lists::stallNames.begin(), lists::stallNames.end());
+            sort(lists::dishTypes.begin(),  lists::dishTypes.end());
+            sort(lists::meatTypes.begin(),  lists::meatTypes.end());
         }
 
         {   // Initialise keywords and tags
-            ifstream file(chk_openFile("parse/responseTags.csv"));
+            ifstream file(init::chk_openFile("parse/responseTags.csv"));
             string line;
+            getline(file, line);
             while (getline(file, line)) {
-                string keyword, tagStr;
+                string keyword, tagStr, tag;
                 stringstream ss(line);
                 if (line.back() == '\r') line.pop_back(); 
                 getline(ss, keyword, ',');
                 ss >> tagStr;
-                lists.keywords.push_back(keyword);
-                
-                // Parse tags
-                string tag;
                 ss = stringstream(tagStr);
                 vector<string> tags;
                 while (getline(ss, tag, ';'))
                     tags.push_back(tag);
                 
                 // Add entry
-                pair<string, vector<string>> entry(keyword, tags);
-                lists.tags.push_back(entry);
+                lists::keywords.push_back(keyword);
+                lists::labels.push_back(Label(keyword, tags));
             }
         }
         
@@ -131,23 +136,6 @@ bool conversation() {
         check each non-keyword word with remainng lists
         for words that return results, take intersection
     */
-
-    // Parse keywords
-    /*for (string word : sentence.get()) {
-        if (inside(word, lists.keywords))
-            sentence.addKey(word);
-    }*/
-
-    for (string word : sentence.get()) {
-        // for pair 
-        for (auto pair : lists.tags)
-        // if the word in the sentence matches the keyword
-            if (word == pair.first) {
-                // for tag in the tags, get response
-                for (string tag : pair.second)
-                    getResponse(tag);
-            }
-    }
 
     //  pseudocode
     /*  
@@ -189,6 +177,22 @@ string prompt(string str) {
     string response;
     getline(cin, response);
     return response;
+}
+
+void answer(string tag) {
+    switch (util::hash(tag.c_str())) {
+    case util::hash("operation"):
+        cout << "We are open from 8am-4pm on weekdays." << endl;
+        break;
+
+    case util::hash("location"):
+        cout << "We are located at Taylor's University." << endl;
+        break;
+
+    default:
+        throw runtime_error("undefined tag");
+    }
+    cout << endl;
 }
 
 void menu(vector<Item> items) {
@@ -233,7 +237,7 @@ void menu(vector<Item> items) {
             } else if (sentence.contains(keys_next)) {
                 cout << "No next page!" << endl;
             } else {
-                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), isnumstr);
+                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool number = it != sentence.end();
 
                 if (sentence.contains(keys_page)) {
@@ -282,7 +286,7 @@ void menu(vector<Item> items) {
                     }
                 };
 
-                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), isnumstr);
+                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool number = it != sentence.end();
 
                 if (sentence.contains(keys_page)) {
@@ -320,7 +324,7 @@ void menu(vector<Item> items) {
     }
 }
 
-ifstream chk_openFile(string fileName) {
+ifstream init::chk_openFile(string fileName) {
     ifstream file(fileName);
     if (file.is_open()) {
         cout << fileName << " opened successfully." << endl;
@@ -330,24 +334,9 @@ ifstream chk_openFile(string fileName) {
     return file;
 }
 
-void generateList(string str, vector<string>& v) {
-    if (!inside(str, v))
+void init::generateList(string str, vector<string>& v) {
+    if (!util::contains(str, v))
         v.push_back(str);
-}
-
-void getResponse(string _tag) {
-    char *tag = &_tag[0];
-    switch(::hash(tag)) {
-        case ::hash("operation"):
-            cout << "We are open from 8am-4pm on weekdays." << endl;
-            break;
-        case ::hash("location"):
-            cout << "We are located at Taylor's University." << endl;
-            break;
-        default:
-            cout << "<" << _tag << "> tag has yet to have a response." << endl;
-    }
-    cout << endl;
 }
 
 bool test(int argc, char** argv) {
@@ -366,31 +355,32 @@ bool test(int argc, char** argv) {
         return false;
 
     case 2:
-        switch (::hash(argv[1])) {
+        switch (util::hash(argv[1])) {
         // Sandbox test area
-        case ::hash("test"):
-            
+        case util::hash("test"): {
+            cout << boolalpha << Sentence("This is a sentence").search("sentence is false") << endl;
+            return true;
+        }
+
+        case util::hash("open"):
             return true;
 
-        case ::hash("open"):
-            return true;
-
-        case ::hash("list"):
+        case util::hash("list"):
             // Print lists
-            cout << "Stall names: "; tf_list(lists.stallNames);
-            cout << "Dish types:  "; tf_list(lists.dishTypes);
-            cout << "Meat types:  "; tf_list(lists.meatTypes);
-            cout << "Keywords:    "; tf_list(lists.keywords);
+            cout << "Stall names: "; tf_list(lists::stallNames);
+            cout << "Dish types:  "; tf_list(lists::dishTypes);
+            cout << "Meat types:  "; tf_list(lists::meatTypes);
+            cout << "Keywords:    "; tf_list(lists::keywords);
             return true;
 
-        case ::hash("items"):
+        case util::hash("items"):
             // Display items
             for (Item item : items)
                 item.display();
             cout << "Item count: " << items.size() << endl;
             return true;
 
-        case ::hash("menu"):
+        case util::hash("menu"):
             // Display menu and result
             menu(vector(items.begin(), items.begin() + 10));
             result.display();

@@ -1,23 +1,44 @@
-Q: I would like to make an order.
-A: *Proceeds to order function*
+*** PATTERN NOTATION ***
+pattern {
+    mandatorytag1 = word1, word2;
+    mandatorytag2 = word3, word4;
+}
+(optionaltag = word5)
 
-Q: What is the price for Nasi Goreng?
-A: Which Nasi Goreng are you referring to?
+ORDERS {
+    MAKE ORDER {
+        • order
+        • place order
+        • make order
+        • i would like to order
+        pattern {
+            order = order;
+            makeorder = place order, make order;
+        }
+    }
 
-Q:
-A:
+    CHECK ORDERS {
+        • check order
+        • checkout
+        • order list
+        pattern {
+            checkorder = check order, checkout, order list;
+        }
+    }
 
-Q:
-A:
+}
+ 
+RECOMMENDATIONS {
+    • what do you recommend/suggest
+    • do you have any recommendations/suggestions
+    pattern {
+        recommend = recommend, recommendations, suggest, suggestions;
+    }
+}
 
-Q:
-A:
-
-Q:
-A:
-
-Q:
-A:
-
-Q:
-A:
+FILTERS {
+    VEGETARIAN {
+        • do you have any vegetarian options?
+        • do you have options that don't have meat?
+    }
+}

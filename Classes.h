@@ -33,12 +33,12 @@ private:
 class Sentence {
 public:
     Sentence();
-    void read  (std::string);
-    void addKey(std::string);
-    void clear ();
+    Sentence(std::string);
 
-    std::string              str();
-    std::vector<std::string> get();
+    void clear ();
+    void read  (std::string);
+
+    std::string str();
 
     void println();
     void println(std::function<bool(std::string)>);
@@ -46,15 +46,17 @@ public:
     bool is      (std::string);
     bool contains(std::string);
     bool contains(std::vector<std::string>);
-    void search  (std::vector<std::pair<std::string, std::vector<std::string>>>);
+    bool search  (std::string);
+    
+    std::vector<std::string> parse(std::vector<std::string>);
 
+    std::vector<std::string> operator()();
     std::vector<std::string>::iterator begin();
     std::vector<std::string>::iterator end();
 
 private:
     std::string sentence_string;
     std::vector<std::string> sentence;
-    std::vector<std::string> keywords;
 };
 
 #endif

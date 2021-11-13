@@ -70,6 +70,14 @@ void Item::list(int i) {
 
 Sentence::Sentence() {}
 
+Sentence::Sentence(string str) {
+    this->read(str);
+}
+
+void Sentence::clear() {
+    sentence.clear();
+}
+
 void Sentence::read(string str) {
     sentence.clear();
     sentence_string = str;
@@ -89,20 +97,8 @@ void Sentence::read(string str) {
             word.pop_back();
 }
 
-void Sentence::addKey(string str) {
-    keywords.push_back(str);
-}
-
-void Sentence::clear() {
-    sentence.clear();
-}
-
 string Sentence::str() {
     return sentence_string;
-}
-
-vector<string> Sentence::get() {
-    return sentence;
 }
 
 void Sentence::println() {
@@ -121,19 +117,45 @@ void Sentence::println(function<bool(string)> f) {
 }
 
 bool Sentence::is(string str) {
-    return ciequal(str, sentence_string);
+    return util::iequals(str, sentence_string);
 }
 
 bool Sentence::contains(string str) {
-    return inside(str, sentence);
+    return util::contains(str, sentence);
 }
 
 bool Sentence::contains(vector<string> words) {
     for (string word : words) {
-        if (inside(word, sentence))
+        if (util::contains(word, sentence))
             return true;
     }
     return false;
+}
+
+bool Sentence::search(string str) {
+    vector<string> target = Sentence(str)();
+    if (target.size() == 1) {
+        return this->contains(target);
+    } else {
+        for (string word : target) {
+            if (!util::contains(word, sentence)) {}
+                return false;
+        }
+    }
+    return true;
+}
+
+vector<string> Sentence::parse(vector<string> keywords) {
+    vector<string> res;
+    for (string word : sentence) {
+        if (util::contains(word, keywords))
+            res.push_back(word);
+    }
+    return res;
+}
+
+vector<string> Sentence::operator()() {
+    return sentence;
 }
 
 vector<string>::iterator Sentence::begin() {

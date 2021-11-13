@@ -5,16 +5,16 @@
 
 using namespace std;
 
-bool inside(string str, vector<string> v) {
+bool util::contains(string str, vector<string> v) {
     // case-insensitive find function
     return any_of(v.begin(), v.end(),
                   [str](string key) {
-                      return ciequal(str, key);
+                      return iequals(str, key);
                   });
 }
 
 // case-insensitive comparison
-bool ciequal(string a, string b) {
+bool util::iequals(string a, string b) {
     return equal(a.begin(), a.end(),
                  b.begin(), b.end(),
                  [](char a, char b) {
@@ -22,7 +22,7 @@ bool ciequal(string a, string b) {
                  });
 }
 
-bool isnumstr(string str) {
+bool util::isnumber(string str) {
     for (char chr : str) {
         if (!isdigit(chr)) // changed to isdigit due to isnumber is MacOS specific
             return false;
