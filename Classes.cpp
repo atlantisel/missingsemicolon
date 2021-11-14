@@ -1,4 +1,5 @@
 #include <fstream>
+#include <functional>
 #include <iomanip>
 #include <iostream>
 #include <sstream>
@@ -13,59 +14,84 @@ Item::Item() {};
 Item::Item(string line) {
     string temp;
     stringstream ss(line);
-    getline(ss, stallName, ',');
-    getline(ss, itemName, ',');
+    getline(ss, priv.stallName, ',');
+    getline(ss, priv.itemName, ',');
     getline(ss, temp, ',');
-    price = stod(temp);
+    priv.price = stod(temp);
     getline(ss, temp, ',');
-    deliverable = temp == "yes" ? true : false;
-    getline(ss, dishType, ',');
-    getline(ss, meatType, ',');
+    priv.deliverable = temp == "yes" ? true : false;
+    getline(ss, priv.dishType, ',');
+    getline(ss, priv.meatType, ',');
 }
 
-string Item::_stallName() {
-    return stallName;
+string Item::stallName() {
+    return priv.stallName;
 }
 
-string Item::_itemName() {
-    return itemName;
+string Item::itemName() {
+    return priv.itemName;
 }
 
-float Item::_price() {
-    return price;
+float Item::price() {
+    return priv.price;
 }
 
-bool Item::_deliverable() {
-    return deliverable;
+bool Item::deliverable() {
+    return priv.deliverable;
 }
 
-string Item::_dishType() {
-    return dishType;
+string Item::dishType() {
+    return priv.dishType;
 }
 
-string Item::_meatType() {
-    return meatType;
+string Item::meatType() {
+    return priv.meatType;
 }
 
 void Item::display() {
     cout << fixed << setprecision(2)
-         << "Item:  " << itemName  << endl
-         << "Price: " << price     << endl
-         << "Stall: " << stallName << endl
-         << "Type:  " << dishType  << endl
-         << "Meat:  " << meatType  << endl
-         << "Delivery" << (deliverable ? " " : " not ") << "available" << endl
+         << "Item:  " << priv.itemName  << endl
+         << "Price: " << priv.price     << endl
+         << "Stall: " << priv.stallName << endl
+         << "Type:  " << priv.dishType  << endl
+         << "Meat:  " << priv.meatType  << endl
+         << "Delivery" << (priv.deliverable ? " " : " not ") << "available" << endl
          << endl;
 }
 
 void Item::list(int i) {
     stringstream p;
-    p << fixed << " " << setprecision(2) << price;
+    p << fixed << " " << setprecision(2) << priv.price;
     cout << right                 << setw(3)  << i << ". "
-         << left  << setfill('.') << setw(45) << (itemName + " ")
+         << left  << setfill('.') << setw(45) << (priv.itemName + " ")
          << right                 << setw(6)  << p.str() << endl
-                  << setfill(' ') << setw(6)  << "(" << stallName
-         << " - " << dishType << ")" << endl;
+                  << setfill(' ') << setw(6)  << "(" << priv.stallName
+         << " - " << priv.dishType << ")" << endl;
+}
+
+Label::Label() {}
+
+Label::Label(string _keyword, vector<string> _tags) {
+    priv.keyword = _keyword;
+    priv.tags = _tags;
+}
+
+Label::Label(string _keyword, vector<string> _tags, vector<string> _checks) {
+    priv.keyword = _keyword;
+    priv.tags = _tags;
+    priv.checks = _checks;
+}
+
+string Label::keyword() {
+    return priv.keyword;
+}
+
+vector<string> Label::tags() {
+    return priv.tags;
+}
+
+vector<string> Label::checks() {
+    return priv.checks;
 }
 
 Sentence::Sentence() {}
@@ -88,13 +114,17 @@ void Sentence::read(string str) {
         sentence.push_back(word);
     }
 
+
     // Remove trailing \n
     sentence.pop_back();
 
     // Clean punctuation
     for (string& word : sentence)
-        while (!isalnum(word.back()))
-            word.pop_back();
+        word.erase(find_if(word.begin(), word.end(),
+                           [](char c) {
+                               return !isalnum(c);
+                           }));
+    sentence.erase(remove_if(sentence.begin(), sentence.end(), mem_fn(&string::empty)), sentence.end());
 }
 
 string Sentence::str() {
@@ -124,7 +154,7 @@ bool Sentence::contains(string str) {
     return util::contains(str, sentence);
 }
 
-bool Sentence::contains(vector<string> words) {
+bool Sentence::anyof(vector<string> words) {
     for (string word : words) {
         if (util::contains(word, sentence))
             return true;
@@ -132,24 +162,28 @@ bool Sentence::contains(vector<string> words) {
     return false;
 }
 
-bool Sentence::search(string str) {
-    vector<string> target = Sentence(str)();
-    if (target.size() == 1) {
+// locate phrase in sentence; distinct from "contiguous" util::contains()
+bool Sentence::search(string target) {
+    if (!util::hasspaces(target)) {
         return this->contains(target);
     } else {
-        for (string word : target) {
-            if (!util::contains(word, sentence)) {}
+        vector<string> phrase = Sentence(target)();
+        for (string word : phrase) {
+            if (!util::contains(word, sentence))
                 return false;
         }
     }
     return true;
 }
 
-vector<string> Sentence::parse(vector<string> keywords) {
+// return tags associated with string
+vector<string> Sentence::parse(vector<Label> labels) {
     vector<string> res;
-    for (string word : sentence) {
-        if (util::contains(word, keywords))
-            res.push_back(word);
+    for (Label label : labels) {
+        string keyword = label.keyword();
+        if (this->search(keyword))
+            for (string tag : label.tags())
+                res.push_back(tag);
     }
     return res;
 }

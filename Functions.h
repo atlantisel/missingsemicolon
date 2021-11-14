@@ -1,16 +1,43 @@
 #ifndef Functions_h
 #define Functions_h
 
+#include <algorithm>    // any_of, equal
+#include <cctype>       // idigit
 #include <string>
 #include <vector>
 
 namespace util {
-    bool contains(std::string, std::vector<std::string>);
-
     // case-insensitive comparison
-    bool iequals(std::string, std::string);
+    inline bool iequals(std::string a, std::string b) {
+        return std::equal(a.begin(), a.end(),
+                          b.begin(), b.end(),
+                          [](char a, char b) {
+                              return tolower(a) == tolower(b);
+                          });
+    }
 
-    bool isnumber(std::string);
+    // case-insensitive find function
+    // locate member in vector; distinct from "non-contiguous" Sentence::search()
+    inline bool contains(std::string str, std::vector<std::string> v) {
+        return std::any_of(v.begin(), v.end(),
+                           [str](std::string key) {
+                               return iequals(str, key);
+                           });
+    }
+
+    inline bool isnumber(std::string str) {
+        return std::find_if(str.begin(), str.end(),
+                            [](char chr) {
+                                return !std::isdigit(chr);
+                            }) == str.end();
+    }
+
+    inline bool hasspaces(std::string str) {
+        return std::find_if(str.begin(), str.end(),
+                            [](char chr) {
+                                return std::isspace(chr);
+                            }) != str.end();
+    }
 
     // constexpr functions are implicitly inline
     constexpr unsigned int hash(const char *str, int off = 0) {

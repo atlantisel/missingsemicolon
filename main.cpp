@@ -11,11 +11,11 @@
 
 using namespace std;
 
-bool     conversation();
-string   prompt      (string = "");
-void     answer      (string);
-void     menu        (vector<Item>);
-bool     test        (int, char**);
+bool   conversation();
+string prompt      (string = "");
+void   answer      (string);
+void   menu        (vector<Item>);
+bool   test        (int, char**);
 
 namespace init {
     ifstream chk_openFile(string);
@@ -49,19 +49,10 @@ private:
     vector<Item> items;
 } items;
 
-struct Label {
-    Label(string _keyword, vector<string> _tags)
-        : keyword(_keyword), tags(_tags) {
-    }
-    string         keyword;
-    vector<string> tags;
-};
-
 namespace lists {
     vector<string> stallNames;
     vector<string> dishTypes;
     vector<string> meatTypes;
-    vector<string> keywords;
     vector<Label>  labels;
 };
 
@@ -76,9 +67,9 @@ int main(int argc, char** argv) {
         {   
             // Generate lists
             for (Item item : items) {
-                init::generateList(item._stallName(), lists::stallNames);
-                init::generateList(item._dishType(),  lists::dishTypes);
-                init::generateList(item._meatType(),  lists::meatTypes);
+                init::generateList(item.stallName(), lists::stallNames);
+                init::generateList(item.dishType(),  lists::dishTypes);
+                init::generateList(item.meatType(),  lists::meatTypes);
             }
             sort(lists::stallNames.begin(), lists::stallNames.end());
             sort(lists::dishTypes.begin(),  lists::dishTypes.end());
@@ -86,23 +77,30 @@ int main(int argc, char** argv) {
         }
 
         {   // Initialise keywords and tags
-            ifstream file(init::chk_openFile("parse/responseTags.csv"));
+            ifstream file(init::chk_openFile("tags.csv"));
             string line;
             getline(file, line);
             while (getline(file, line)) {
-                string keyword, tagStr, tag;
-                stringstream ss(line);
+                string keyword, tagStr, tag, checkStr, check;
+                vector<string> tags, checks;
+
                 if (line.back() == '\r') line.pop_back(); 
+
+                stringstream ss(line);
                 getline(ss, keyword, ',');
-                ss >> tagStr;
+                getline(ss, tagStr, ',');
+                getline(ss, checkStr, ',');
+
                 ss = stringstream(tagStr);
-                vector<string> tags;
-                while (getline(ss, tag, ';'))
-                    tags.push_back(tag);
-                
-                // Add entry
-                lists::keywords.push_back(keyword);
-                lists::labels.push_back(Label(keyword, tags));
+                while (ss >> tag) tags.push_back(tag);
+
+                if (checkStr.empty()) {
+                    lists::labels.push_back(Label(keyword, tags));
+                } else {
+                    ss = stringstream(checkStr);
+                    while (ss >> check) checks.push_back(check);
+                    lists::labels.push_back(Label(keyword, tags, checks));
+                }
             }
         }
         
@@ -128,14 +126,6 @@ bool conversation() {
         // Subsequent state
         sentence.read(prompt("Is there anything else I can help you with?"));
     }
-    
-    /*
-    for all words, search through
-    check keywords
-    then 
-        check each non-keyword word with remainng lists
-        for words that return results, take intersection
-    */
 
     //  pseudocode
     /*  
@@ -154,11 +144,12 @@ bool conversation() {
                 • Prompt delivery address
             • Sends receipt
     */
+    // if the sentence contains the label.keyword, then pass tags into answer()
+    vector<string> keywords = sentence.parse(lists::labels);
 
     if (sentence.is("order")) { // will change this to finding keywords
         // shows menu
-        // gives recommendation
-        cout << "Here's our menu.\nType page x to go to it.\nType numbers to select meal." << endl;
+        cout << "Here's what we offer at the canteen!" << endl;
         menu(items());
     }
 
@@ -201,21 +192,17 @@ void menu(vector<Item> items) {
     int  tot  = (items.size() - 1) / 10 + 1;
     bool pgin = false;
 
-    const vector<string> keys_cancel   = {"cancel"};
-    const vector<string> keys_previous = {"previous", "prev", "back", "left"};
-    const vector<string> keys_next     = {"next", "forward", "right"};
-    const vector<string> keys_page     = {"page", "pg", "go", "to", "goto"};
-
     auto menupg = [&]() {
         off = (cur - 1) * 10 + 1;
         range = items.size() - off + 1;
-        for (int i = off; i < off + (range < 10 ? range : 10); i++)
+        for (int i = off; i < off + (range < 10 ? range : 10); i++) {
             items[i - 1].list(i);
+        }
         cout << "Page " << cur << "/" << tot << endl;
         pgin = false;
     };
 
-    auto iteminbounds = [&](int i) {
+    auto iteminbounds = [&](int i) -> bool {
         if (i < off || i >= off + (range < 10 ? range : 10)) {
                 cout << "Item not on page!" << endl;
                 return true;
@@ -225,22 +212,49 @@ void menu(vector<Item> items) {
             }
     };
 
+    auto searchitem = [&]() -> bool {
+        vector<Item> listed = vector<Item>(items.begin() + off - 1, items.begin() + off - 1 + (range < 10 ? range : 10));
+        vector<Item> found;
+
+        // for each item on page
+        for (Item item : listed) {
+            // if sentence is found in item name
+            if (Sentence(item.itemName()).search(sentence.str()))
+                found.push_back(item);
+        }
+        if (found.size() > 1) {
+            cout << "Here's what we found:" << endl;
+            menu(found);
+        } else if (found.empty()) {
+            cout << "Item not found!" << endl;
+            return true;
+        } else {   
+            result = found[0];
+        }
+        return false;
+    };
+
+    const vector<string> keys_cancel   = {"cancel", "escape", "exit"};
+    const vector<string> keys_previous = {"previous", "prev", "back", "left"};
+    const vector<string> keys_next     = {"next", "forward", "right"};
+    const vector<string> keys_page     = {"page", "pg", "go", "to", "goto"};
+
     menupg(); // Always display first page
 
     if (items.size() <= 10) {
         while ([&]() -> bool {
             sentence.read(prompt());
-            if (sentence.contains(keys_cancel)) {
+            if (sentence.anyof(keys_cancel)) {
                 return false;
-            } else if (sentence.contains(keys_previous)) {
+            } else if (sentence.anyof(keys_previous)) {
                 cout << "No previous page!" << endl;
-            } else if (sentence.contains(keys_next)) {
+            } else if (sentence.anyof(keys_next)) {
                 cout << "No next page!" << endl;
             } else {
                 vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool number = it != sentence.end();
 
-                if (sentence.contains(keys_page)) {
+                if (sentence.anyof(keys_page)) {
                     if (number && stoi(*it) == 1) {
                         menupg();
                     } else {
@@ -249,9 +263,7 @@ void menu(vector<Item> items) {
                 } else if (number) {
                     return iteminbounds(stoi(*it));
                 } else {
-                    // TO IMPLEMENT SEARCH ROUTINE
-                    cout << "Search" << endl;
-                    return false;
+                    return searchitem();
                 }
             }
             return true;
@@ -259,16 +271,16 @@ void menu(vector<Item> items) {
     } else {
         while ([&]() -> bool {
             sentence.read(prompt());
-            if (sentence.contains(keys_cancel)) {
+            if (sentence.anyof(keys_cancel)) {
                 return false;
-            } else if (sentence.contains(keys_previous)) {
+            } else if (sentence.anyof(keys_previous)) {
                 if (cur != 1) {
                     --cur;
                     menupg();
                 } else {
                     cout << "No previous page!" << endl;
                 }
-            } else if (sentence.contains(keys_next)) {
+            } else if (sentence.anyof(keys_next)) {
                 if (cur != tot) {
                     ++cur;
                     menupg();
@@ -289,7 +301,7 @@ void menu(vector<Item> items) {
                 vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool number = it != sentence.end();
 
-                if (sentence.contains(keys_page)) {
+                if (sentence.anyof(keys_page)) {
                     if (!number) {
                         cout << "Which page would you like to go to?" << endl;
                         pgin = true;
@@ -303,20 +315,7 @@ void menu(vector<Item> items) {
                         return iteminbounds(stoi(*it));
                     }
                 } else {
-                    // TO IMPLEMENT SEARCH ROUTINE
-                    cout << "Search" << endl;
-                    return false;
-                /*  search sentence for item names found in items
-                    if (match count == 1) {
-                        result = matched item
-                    } else if (match count > 1) {
-                        cout << "I found these items, which one would you like?" << endl;
-                        menu(matched items)
-                    } else {
-                        cout << "Sorry, I didn't understand that." << endl;
-                        return true;
-                    }
-                    return false; */
+                    return searchitem();
                 }
             }
             return true;
@@ -358,7 +357,7 @@ bool test(int argc, char** argv) {
         switch (util::hash(argv[1])) {
         // Sandbox test area
         case util::hash("test"): {
-            cout << boolalpha << Sentence("This is a sentence").search("sentence is false") << endl;
+            cout << boolalpha << Sentence("This is a sentence").search("sentence is") << endl;
             return true;
         }
 
@@ -370,7 +369,6 @@ bool test(int argc, char** argv) {
             cout << "Stall names: "; tf_list(lists::stallNames);
             cout << "Dish types:  "; tf_list(lists::dishTypes);
             cout << "Meat types:  "; tf_list(lists::meatTypes);
-            cout << "Keywords:    "; tf_list(lists::keywords);
             return true;
 
         case util::hash("items"):
@@ -382,7 +380,7 @@ bool test(int argc, char** argv) {
 
         case util::hash("menu"):
             // Display menu and result
-            menu(vector(items.begin(), items.begin() + 10));
+            menu(items());
             result.display();
             return true;
 

@@ -11,23 +11,43 @@ public:
     Item();
     Item(std::string);
 
-    std::string _stallName();
-    std::string _itemName();
-    float       _price();
-    bool        _deliverable();
-    std::string _dishType();
-    std::string _meatType();
+    std::string stallName();
+    std::string itemName();
+    float       price();
+    bool        deliverable();
+    std::string dishType();
+    std::string meatType();
 
     void display();
-    void list(int);
+    void list   (int);
 
 private:
-    std::string stallName   = "";
-    std::string itemName    = "";
-    float       price       = 0;
-    bool        deliverable = false;
-    std::string dishType    = "";
-    std::string meatType    = "";
+    struct {
+        std::string stallName;
+        std::string itemName;
+        float       price;
+        bool        deliverable;
+        std::string dishType;
+        std::string meatType;
+    } priv;
+};
+
+class Label {
+public:
+    Label();
+    Label(std::string, std::vector<std::string>);
+    Label(std::string, std::vector<std::string>, std::vector<std::string>);
+
+    std::string              keyword();
+    std::vector<std::string> tags();
+    std::vector<std::string> checks();
+
+private:
+    struct {
+        std::string              keyword;
+        std::vector<std::string> tags;
+        std::vector<std::string> checks;
+    } priv;
 };
 
 class Sentence {
@@ -45,10 +65,10 @@ public:
 
     bool is      (std::string);
     bool contains(std::string);
-    bool contains(std::vector<std::string>);
+    bool anyof   (std::vector<std::string>);
     bool search  (std::string);
     
-    std::vector<std::string> parse(std::vector<std::string>);
+    std::vector<std::string> parse(std::vector<Label>);
 
     std::vector<std::string> operator()();
     std::vector<std::string>::iterator begin();
