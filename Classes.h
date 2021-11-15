@@ -18,8 +18,14 @@ public:
     std::string dishType();
     std::string meatType();
 
+    bool empty();
+    void clear();
+
     void display();
     void list   (int);
+
+    bool       operator==(Item);
+    const bool operator==(Item) const;
 
 private:
     struct {
@@ -32,21 +38,24 @@ private:
     } priv;
 };
 
-class Label {
-public:
-    Label();
-    Label(std::string, std::vector<std::string>);
-    Label(std::string, std::vector<std::string>, std::vector<std::string>);
+std::vector<Item> merge(std::vector<Item>, std::vector<Item>);
+std::vector<Item> merge(std::vector<std::vector<Item>>);
 
-    std::string              keyword();
-    std::vector<std::string> tags();
+class Tag {
+public:
+    Tag();
+    Tag(std::string, std::vector<std::string>);
+    Tag(std::string, std::vector<std::string>, std::vector<std::string>);
+
+    std::string              tag();
     std::vector<std::string> checks();
+    std::vector<std::string> keywords();
 
 private:
     struct {
-        std::string              keyword;
-        std::vector<std::string> tags;
+        std::string              tag;
         std::vector<std::string> checks;
+        std::vector<std::string> keywords;
     } priv;
 };
 
@@ -68,7 +77,7 @@ public:
     bool anyof   (std::vector<std::string>);
     bool search  (std::string);
     
-    std::vector<std::string> parse(std::vector<Label>);
+    std::vector<Tag> parse(std::vector<Tag>);
 
     std::vector<std::string> operator()();
     std::vector<std::string>::iterator begin();

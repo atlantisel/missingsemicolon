@@ -48,6 +48,19 @@ string Item::meatType() {
     return priv.meatType;
 }
 
+bool Item::empty() {
+    return priv.itemName == "";
+}
+
+void Item::clear() {
+    priv.itemName    = "";
+    priv.stallName   = "";
+    priv.price       = 0;
+    priv.deliverable = false;
+    priv.dishType    = "";
+    priv.meatType    = "";
+}
+
 void Item::display() {
     cout << fixed << setprecision(2)
          << "Item:  " << priv.itemName  << endl
@@ -69,29 +82,53 @@ void Item::list(int i) {
          << " - " << priv.dishType << ")" << endl;
 }
 
-Label::Label() {}
-
-Label::Label(string _keyword, vector<string> _tags) {
-    priv.keyword = _keyword;
-    priv.tags = _tags;
+bool Item::operator==(Item item) {
+    return this->priv.itemName == item.priv.itemName;
 }
 
-Label::Label(string _keyword, vector<string> _tags, vector<string> _checks) {
-    priv.keyword = _keyword;
-    priv.tags = _tags;
+const bool Item::operator==(Item item) const {
+    return this->priv.itemName == item.priv.itemName;
+}
+
+vector<Item> merge(vector<Item> a, vector<Item> b) {
+    for (Item item : b) {
+        if (!util::contains(item, a))
+            a.push_back(item);
+    }
+    return a;
+}
+
+vector<Item> merge(vector<vector<Item>> v) {
+    if (v.size() > 2) {
+        return merge(v[0], merge(vector<vector<Item>>(v.begin() + 1, v.end())));
+    } else {
+        return merge(v[0], v[1]);
+    }
+}
+
+Tag::Tag() {}
+
+Tag::Tag(string _tag, vector<string> _keywords) {
+    priv.tag = _tag;
+    priv.keywords = _keywords;
+}
+
+Tag::Tag(string _tag, vector<string> _checks, vector<string> _keywords) {
+    priv.tag = _tag;
     priv.checks = _checks;
+    priv.keywords = _keywords;
 }
 
-string Label::keyword() {
-    return priv.keyword;
+string Tag::tag() {
+    return priv.tag;
 }
 
-vector<string> Label::tags() {
-    return priv.tags;
-}
-
-vector<string> Label::checks() {
+vector<string> Tag::checks() {
     return priv.checks;
+}
+
+vector<string> Tag::keywords() {
+    return priv.keywords;
 }
 
 Sentence::Sentence() {}
@@ -177,14 +214,12 @@ bool Sentence::search(string target) {
 }
 
 // return tags associated with string
-vector<string> Sentence::parse(vector<Label> labels) {
-    vector<string> res;
-    for (Label label : labels) {
-        string keyword = label.keyword();
-        if (this->search(keyword))
-            for (string tag : label.tags())
+vector<Tag> Sentence::parse(vector<Tag> tags) {
+    vector<Tag> res;
+    for (Tag tag : tags)
+        for (string keyword : tag.keywords()) 
+            if (this->search(keyword))
                 res.push_back(tag);
-    }
     return res;
 }
 

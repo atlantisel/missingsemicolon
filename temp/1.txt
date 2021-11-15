@@ -51,7 +51,7 @@ RECOMMENDATIONS {
         • what do you recommend/suggest
         • do you have any recommendations/suggestions
         pattern {
-            ✅ #recommend = recommend, recommendation(s), suggest, suggestion(s);
+            ✅ #recommend -> [#cheap] = recommend, recommendation(s), suggest, suggestion(s);
         }
     }
 
@@ -103,20 +103,20 @@ FILTERS {
             ✅ #bread = bread;
         }}
         NOODLES { pattern {
-            #noodles = noodle, udon, soba;
+            ✅ #noodles = noodle, udon, soba;
         }}
         SOUP    { pattern {
-            #soup = soup, stew;
+            ✅ #soup = soup, stew;
         }}
         SIDE    { pattern {
-            #side = side, appetizer, appetiser, starter, hors doeuvre
+            ✅ #side = side, appetizer, appetiser, starter, hors doeuvre
         }}
         DRINKS {
             HOT  { pattern {
-                #hot = hot, warm;
+                ✅ #hot = hot, warm;
             }}
             COLD { pattern {
-                #cold = cold, ice, iced, thirsty;
+                ✅ #cold = cold, ice, iced, thirsty;
             }}
         }
     }

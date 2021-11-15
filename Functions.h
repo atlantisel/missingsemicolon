@@ -25,6 +25,13 @@ namespace util {
                            });
     }
 
+    inline bool contains(Item item, std::vector<Item> v) {
+        return std::any_of(v.begin(), v.end(),
+                           [item](Item key) {
+                               return item == key;
+                           });
+    }
+
     inline bool isnumber(std::string str) {
         return std::find_if(str.begin(), str.end(),
                             [](char chr) {
