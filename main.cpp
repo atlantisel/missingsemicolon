@@ -211,8 +211,8 @@ bool conversation() {
     vector<Tag> tags = sentence.parse(lists::tags);
     
     // includes dependent tag check processing
-    const auto tagged = [tags](string str) -> bool {
-        auto f = [tags](string str, auto&& tagged_ref) mutable -> bool {
+    const auto tagged = [&tags](string str) -> bool {
+        auto f = [&tags](string str, auto&& tagged_ref) mutable -> bool {
             for (Tag tag : tags)
                 if (util::iequals(str, tag.tag())) {
                     if (tag.checks().empty()) {

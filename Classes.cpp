@@ -162,7 +162,9 @@ void Sentence::read(string str) {
                                return !isalnum(c);
                            }), word.end());
     }
-    sentence.erase(remove_if(sentence.begin(), sentence.end(), mem_fn(&string::empty)), sentence.end());
+    sentence.erase(remove_if(sentence.begin(), sentence.end(),
+                             mem_fn(&string::empty)),
+                             sentence.end());
 }
 
 string Sentence::str() {

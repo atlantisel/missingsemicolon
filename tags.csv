@@ -14,6 +14,10 @@ makeorder,,did order;did ordered;did ordering;did orders;do order;do ordered;do 
 malay,,malay;melayu
 mamak,,mamak;mamaks;street food;street foods
 meat,beef chicken fish seafood,meat;meats
+chicken,,chicken;chickens;poultry
+beef,,beef;cow;cows
+fish,,fish;fishes
+seafood,,prawn;prawns;seafood;seafoods
 noodle,,noodle;noodles;soba;udon
 order,makeorder vieworders,order;ordered;ordering;orders
 recommend,cheap,recommend;recommendation;recommendations;recommended;recommending;recommends;suggest;suggested;suggesting;suggestion;suggestions;suggests
