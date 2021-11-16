@@ -5,6 +5,7 @@
 #include <cctype>       // idigit
 #include <string>
 #include <vector>
+#include "Classes.h"
 
 namespace util {
     // case-insensitive comparison

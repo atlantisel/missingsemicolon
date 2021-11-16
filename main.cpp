@@ -340,19 +340,30 @@ bool conversation() {
     }
 
     if (tagged("vieworders")) {
+        int i = 1;
         for (Order order : session::orders)
-            cout << order.item.itemName() << " - x" << order.quantity << endl;
+            order.list(i++);
         sentence.read(prompt("You can edit your orders, proceed to payment, or go back."));
         
+        // if (tagged("editorders"))
+        tags = sentence.parse(lists::tags);
+        for (Tag t : tags)
+            cout << t.tag() << endl;
+        cout << tagged("checkout") << endl;
+        // if (!tagged("checkout"))
+        //     return true;
             // go back to conversation
         
         // implement editorders inside
-        return true;
     }
     
     if (tagged("checkout")) {
         // show order summary, with delivery tag
-        
+        if (session::orders.empty()) {
+            cout << "You haven't made any orders yet." << endl;
+            return true;
+        }
+
         // if there are items that are deliverable, prompt user
         double totalPrice = 0;
         bool deliver = false;
@@ -363,17 +374,35 @@ bool conversation() {
         }
         if (deliver == true) {
             sentence.read(prompt("There are foods that can be delivered. Do you want it delivered?"));
-            if (sentence.anyof(keys::yes))
+            if (sentence.anyof(keys::yes)){
                 // prompt address
                 sentence.read(prompt("Please input your address here.")); 
+                cout << "Okay. The food will be delivered to you once it's done cooking :)" << endl;
+            }
+
                 // optional, delivery fees?
                 
         
         // payment/receipt : preference for cash 
-        cout << totalPrice << endl;
+            int i = 1;
+            for (Order order : session::orders)
+                order.list(i++);
+            cout << "Total price: " << totalPrice << endl;
+            sentence.read(prompt("Do you want to pay with cash or card."));
+            cout << "Alright. Thanks for buying our meals." << endl;
+            
         }
         return true;
     }
+
+    if (tagged("recommend")) {
+        // random recommendations
+    }
+
+    if (tagged("operation")) {
+        cout << "We are open from 8am-4pm on weekdays." << endl;
+    }
+
     return true;
 }
 

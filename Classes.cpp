@@ -156,11 +156,12 @@ void Sentence::read(string str) {
     sentence.pop_back();
 
     // Clean punctuation
-    for (string& word : sentence)
-        word.erase(find_if(word.begin(), word.end(),
+    for (string& word : sentence) {
+        word.erase(remove_if(word.begin(), word.end(),
                            [](char c) {
                                return !isalnum(c);
-                           }));
+                           }), word.end());
+    }
     sentence.erase(remove_if(sentence.begin(), sentence.end(), mem_fn(&string::empty)), sentence.end());
 }
 
