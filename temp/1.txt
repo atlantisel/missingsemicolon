@@ -127,7 +127,7 @@ FILTERS {
 
     DELIVERABLE {
         pattern {
-            #delivery = deliver, deliverable;
+            ✅ #delivery = deliver, deliverable;
         }
     }
 
@@ -135,7 +135,7 @@ FILTERS {
         • do you have any vegetarian options?
         • do you have options that don't have meat?
         pattern {
-            #vegetarian = vegetarian, meatless, dont meat, not meat, no meat;
+            ✅ #vegetarian = vegetarian, meatless, dont meat, not meat, no meat;
         }
 }
 

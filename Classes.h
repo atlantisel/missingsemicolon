@@ -17,6 +17,7 @@ public:
     bool        deliverable();
     std::string dishType();
     std::string meatType();
+    bool        recommended();
 
     bool empty();
     void clear();
@@ -35,6 +36,7 @@ private:
         bool        deliverable;
         std::string dishType;
         std::string meatType;
+        bool        recommended;
     } priv;
 };
 

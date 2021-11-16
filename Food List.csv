@@ -1,88 +1,88 @@
-﻿stall_name,item_name,price,delivery_service,dish_type,meat_type
-Malay,Nasi lemak,2,yes,rice,chicken
-Malay,Nasi goreng kampung,6,yes,rice,none
-Malay,Nasi goreng tomyam,6.5,yes,rice,fish
-Malay,Nasi goreng ikan masin,6.5,yes,rice,fish
-Malay,Nasi goreng paprik,7,yes,rice,none
-Malay,Nasi goreng USA,7,yes,rice,none
-Malay,Nasi goreng pattaya,7,yes,rice,none
-Malay,Nasi goreng biasa,5,yes,rice,none
-Malay,Ikan goreng,3.5,yes,meat,fish
-Malay,Ayam goreng,3,yes,meat,chicken
-Malay,Satay,1.2,yes,meat,chicken
-Malay,Kuih talam,0.7,no,dessert,none
-Malay,Kuih koci,0.4,no,dessert,none
-Mamak,Roti canai,1.2,no,bread,none
-Mamak,Roti telur,2.3,no,bread,none
-Mamak,Roti cheese,2.5,no,bread,none
-Mamak,Roti boom,2.2,no,bread,none
-Mamak,Roti planta,2.2,no,bread,none
-Mamak,Roti susu,2.2,no,bread,none
-Mamak,Roti tisu,3.2,no,bread,none
-Mamak,Tosai,1.2,no,bread,none
-Mamak,Mee goreng,5,yes,noodles,none
-Mamak,Maggi goreng,5,yes,noodles,none
-Mamak,Maggi soup,4,yes,noodles,none
-Mamak,Teh tarik ais,2.2,no,cold,none
-Mamak,Teh tarik panas,1.8,no,hot,none
-Mamak,Milo ais,2.5,no,cold,none
-Mamak,Milo panas,2.2,no,hot,none
-Mamak,Cincau,2.5,no,cold,none
-Mamak,Limau ais,1.8,no,cold,none
-Mamak,Limau panas,1.5,no,hot,none
-Mamak,Bandung ais,2,no,cold,none
-Beverage,Apple juice,5,no,cold,none
-Beverage,Orange juice,5,no,cold,none
-Beverage,Watermelon juice,5,no,cold,none
-Beverage,Cucumber juice,5,no,cold,none
-Beverage,Pineapple juice,5,no,cold,none
-Beverage,Carrot juice,5,no,cold,none
-Beverage,Espresso,6,yes,hot,none
-Beverage,Hot Americano,7,yes,hot,none
-Beverage,Iced Americano,8,yes,cold,none
-Beverage,Hot Latte,9,yes,hot,none
-Beverage,Iced Latte,10,yes,cold,none
-Beverage,Hot Cappuccino,9,yes,hot,none
-Beverage,Ice Cappuccino,10,yes,cold,none
-Beverage,Hot Mocha,9,yes,hot,none
-Beverage,Iced Mocha,10,yes,cold,none
-Korean,Tteok,2,yes,rice,none
-Korean,Kimchi,4,yes,side,none
-Korean,Gimbap,4.5,yes,rice,none
-Korean,Tteokbokki,5,yes,rice,none
-Korean,Hobakjuk,6,yes,porridge,none
-Korean,Ramyun,6.5,yes,noodles,none
-Korean,Kimchi Fried Rice,7,yes,rice,none
-Korean,Bulgogi,7,yes,meat,beef
-Korean,Jjajangmyeon,7,yes,noodles,none
-Korean,Kongguksu,7.5,yes,noodles,none
-Korean,Japchae,8,yes,noodles,none
-Korean,Bulgogi with rice,8,yes,rice,beef
-Korean,Naengmyeon,8.5,yes,noodles,none
-Korean,Bibimbap,9,yes,rice,none
-Korean,Sundubu Jjigae,10,yes,soup,none
-Japanese,Miso Soup,1.5,yes,soup,none
-Japanese,Chawanmushi,1.5,yes,side,none
-Japanese,Gyoza,5,yes,side,chicken
-Japanese,Tempura,5,yes,side,seafood
-Japanese,Tamagoyaki (Egg Roll),1.5,yes,side,none
-Japanese,Teriyaki Chicken Bento,8,yes,rice,chicken
-Japanese,Teriyaki Vegetable Bento,6.5,yes,rice,none
-Japanese,Seafood Bento,9,yes,rice,seafood
-Japanese,Chicken Katsu Don,8,yes,rice,chicken
-Japanese,Tempura Soba,7,yes,noodles,seafood
-Japanese,Chicken Yaki Soba,7,yes,noodles,chicken
-Japanese,Vegetable Yaki Soba,6,yes,noodles,none
-Japanese,Zaru Soba,6,yes,noodles,none
-Japanese,Zaru Soba + Tempura,7,yes,noodles,seafood
-Japanese,Tempura Udon,7,yes,noodles,seafood
-Japanese,Chicken Yaki Udon,7,yes,noodles,chicken
-Japanese,Vegetable Yaki Udon,6,yes,noodles,none
-Japanese,Zaru Udon,6,yes,noodles,none
-Japanese,Zaru Udon + Tempura,7,yes,noodles,seafood
-Japanese,Chicken Teriyaki Lunch Set (Miso Soup),10,yes,rice,chicken
-Japanese,Tempura Lunch Set (Miso Soup),9,yes,rice,seafood
-Japanese,Vegetarian Lunch Set (Miso Soup),8,yes,rice,none
-Japanese,Chicken Teriyaki Dinner Set (Chawanmushi),10,yes,rice,chicken
-Japanese,Tempura Dinner Set (Chawanmushi),9,yes,rice,seafood
-Japanese,Vegetarian Dinner Set (Chawanmushi),8,yes,rice,none
+﻿stall_name,item_name,price,delivery_service,dish_type,meat_type,recommended
+Malay,Nasi lemak,2,yes,rice,chicken,no
+Malay,Nasi goreng kampung,6,yes,rice,none,no
+Malay,Nasi goreng tomyam,6.5,yes,rice,fish,no
+Malay,Nasi goreng ikan masin,6.5,yes,rice,fish,no
+Malay,Nasi goreng paprik,7,yes,rice,none,no
+Malay,Nasi goreng USA,7,yes,rice,none,no
+Malay,Nasi goreng pattaya,7,yes,rice,none,yes
+Malay,Nasi goreng biasa,5,yes,rice,none,no
+Malay,Ikan goreng,3.5,yes,meat,fish,no
+Malay,Ayam goreng,3,yes,meat,chicken,no
+Malay,Satay,1.2,yes,meat,chicken,yes
+Malay,Kuih talam,0.7,no,dessert,none,no
+Malay,Kuih koci,0.4,no,dessert,none,no
+Mamak,Roti canai,1.2,no,bread,none,no
+Mamak,Roti telur,2.3,no,bread,none,no
+Mamak,Roti cheese,2.5,no,bread,none,no
+Mamak,Roti boom,2.2,no,bread,none,no
+Mamak,Roti planta,2.2,no,bread,none,no
+Mamak,Roti susu,2.2,no,bread,none,yes
+Mamak,Roti tisu,3.2,no,bread,none,yes
+Mamak,Tosai,1.2,no,bread,none,no
+Mamak,Mee goreng,5,yes,noodles,none,no
+Mamak,Maggi goreng,5,yes,noodles,none,yes
+Mamak,Maggi soup,4,yes,noodles,none,no
+Mamak,Teh tarik ais,2.2,no,cold,none,no
+Mamak,Teh tarik panas,1.8,no,hot,none,yes
+Mamak,Milo ais,2.5,no,cold,none,yes
+Mamak,Milo panas,2.2,no,hot,none,no
+Mamak,Cincau,2.5,no,cold,none,no
+Mamak,Limau ais,1.8,no,cold,none,no
+Mamak,Limau panas,1.5,no,hot,none,no
+Mamak,Bandung ais,2,no,cold,none,no
+Beverage,Apple juice,5,no,cold,none,yes
+Beverage,Orange juice,5,no,cold,none,no
+Beverage,Watermelon juice,5,no,cold,none,yes
+Beverage,Cucumber juice,5,no,cold,none,no
+Beverage,Pineapple juice,5,no,cold,none,no
+Beverage,Carrot juice,5,no,cold,none,no
+Beverage,Espresso,6,yes,hot,none,no
+Beverage,Hot Americano,7,yes,hot,none,yes
+Beverage,Iced Americano,8,yes,cold,none,no
+Beverage,Hot Latte,9,yes,hot,none,no
+Beverage,Iced Latte,10,yes,cold,none,yes
+Beverage,Hot Cappuccino,9,yes,hot,none,no
+Beverage,Ice Cappuccino,10,yes,cold,none,no
+Beverage,Hot Mocha,9,yes,hot,none,no
+Beverage,Iced Mocha,10,yes,cold,none,no
+Korean,Tteok,2,yes,rice,none,no
+Korean,Kimchi,4,yes,side,none,no
+Korean,Gimbap,4.5,yes,rice,none,no
+Korean,Tteokbokki,5,yes,rice,none,no
+Korean,Hobakjuk,6,yes,porridge,none,no
+Korean,Ramyun,6.5,yes,noodles,none,yes
+Korean,Kimchi Fried Rice,7,yes,rice,none,yes
+Korean,Bulgogi,7,yes,meat,beef,no
+Korean,Jjajangmyeon,7,yes,noodles,none,yes
+Korean,Kongguksu,7.5,yes,noodles,none,no
+Korean,Japchae,8,yes,noodles,none,no
+Korean,Bulgogi with rice,8,yes,rice,beef,no
+Korean,Naengmyeon,8.5,yes,noodles,none,no
+Korean,Bibimbap,9,yes,rice,none,no
+Korean,Sundubu Jjigae,10,yes,soup,none,no
+Japanese,Miso Soup,1.5,yes,soup,none,no
+Japanese,Chawanmushi,1.5,yes,side,none,no
+Japanese,Gyoza,5,yes,side,chicken,yes
+Japanese,Tempura,5,yes,side,seafood,no
+Japanese,Tamagoyaki (Egg Roll),1.5,yes,side,none,yes
+Japanese,Teriyaki Chicken Bento,8,yes,rice,chicken,no
+Japanese,Teriyaki Vegetable Bento,6.5,yes,rice,none,no
+Japanese,Seafood Bento,9,yes,rice,seafood,no
+Japanese,Chicken Katsu Don,8,yes,rice,chicken,yes
+Japanese,Tempura Soba,7,yes,noodles,seafood,no
+Japanese,Chicken Yaki Soba,7,yes,noodles,chicken,yes
+Japanese,Vegetable Yaki Soba,6,yes,noodles,none,no
+Japanese,Zaru Soba,6,yes,noodles,none,no
+Japanese,Zaru Soba + Tempura,7,yes,noodles,seafood,no
+Japanese,Tempura Udon,7,yes,noodles,seafood,yes
+Japanese,Chicken Yaki Udon,7,yes,noodles,chicken,no
+Japanese,Vegetable Yaki Udon,6,yes,noodles,none,no
+Japanese,Zaru Udon,6,yes,noodles,none,no
+Japanese,Zaru Udon + Tempura,7,yes,noodles,seafood,no
+Japanese,Chicken Teriyaki Lunch Set (Miso Soup),10,yes,rice,chicken,yes
+Japanese,Tempura Lunch Set (Miso Soup),9,yes,rice,seafood,no
+Japanese,Vegetarian Lunch Set (Miso Soup),8,yes,rice,none,no
+Japanese,Chicken Teriyaki Dinner Set (Chawanmushi),10,yes,rice,chicken,no
+Japanese,Tempura Dinner Set (Chawanmushi),9,yes,rice,seafood,yes
+Japanese,Vegetarian Dinner Set (Chawanmushi),8,yes,rice,none,

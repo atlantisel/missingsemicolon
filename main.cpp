@@ -11,11 +11,6 @@
 
 using namespace std;
 
-bool   conversation();
-string prompt      (string = "");
-void   menu        (vector<Item>);
-bool   test        (int, char**);
-
 namespace init {
     ifstream chk_openFile(string);
     void     generateList(string, vector<string>&);
@@ -33,41 +28,59 @@ struct Items {
         }
     }
 
-    enum field {stallName, dishType, meatType, price, deliverable};
+    enum field {stallName, dishType, meatType, price, deliverable, recommended};
+    enum recommend {yes, no};
 
-    vector<Item> filter(field f, string str = "") {
+    vector<Item> filter(field f, string str = "", recommend r = no) {
         vector<Item> res;
+
+        auto checkrecommended = [r, &res](Item item) {
+            switch (r) {
+            case yes:
+                if (!item.recommended()) break;
+            case no:
+                res.push_back(item);
+            }
+        };
+        
         switch (f) {
         case stallName:
             for (Item item : items) 
                 if (Sentence(item.stallName()).search(str))
-                    res.push_back(item);
+                    checkrecommended(item);
             break;
 
         case dishType:
             for (Item item : items) 
                 if (Sentence(item.dishType()).search(str))
-                    res.push_back(item);
+                    checkrecommended(item);
             break;
 
         case meatType:
             for (Item item : items) 
                 if (Sentence(item.meatType()).search(str))
-                    res.push_back(item);
-            break;                    
+                    checkrecommended(item);
+            break;
 
         case price:
             for (Item item : items)
                 if (item.price() <= stof(str))
-                    res.push_back(item);
+                    checkrecommended(item);
             break;
 
         case deliverable:
             for (Item item : items)
                 if (item.deliverable())
-                    res.push_back(item);
-            break;                    
+                    checkrecommended(item);
+            break;
+
+        case recommended:
+            for (Item item : items)
+                if (item.recommended())
+                    checkrecommended(item);
+            break;
         }
+        
         return res;
     }
 
@@ -102,8 +115,10 @@ namespace lists {
     vector<Tag>    tags;
 };
 
+enum state {start, empty, next};
+
 namespace session {
-    static bool   start = true;
+    state         nowstate = start;
     Order         order;
     vector<Order> orders;
     vector<Item>  results;
@@ -123,6 +138,11 @@ namespace keys {
     const vector<string> page = {
         "go", "goto", "jump", "move", "navigate", "page", "pg", "to"};
 };
+
+template <class T>
+void   menu  (vector<T>, T &t = session::order.item);
+string prompt(string = "");
+bool   test  (int, char**);
 
 Sentence sentence;
 
@@ -169,7 +189,300 @@ int main(int argc, char** argv) {
         
         if (test(argc, argv)) return 0;
 
-        while (conversation());
+        while ([&]() -> bool {
+            switch (session::nowstate) {
+            case state::start:
+                sentence.read(prompt("Hi, I'm Ken. How can I help you out today?"));
+                session::nowstate = state::next;
+                break;
+
+            case state::next:
+                sentence.read(prompt("Is there anything else I can help you with?"));
+                break;
+
+            case state::empty:
+                sentence.read(prompt());
+                session::nowstate = state::next;
+            }
+
+            vector<Tag> tags = sentence.parse(lists::tags);
+            
+            // check for tag in user input
+            // includes dependent tag check processing
+            const auto tagged = [&tags](string str) -> bool {
+                auto f = [&tags](string str, auto&& tagged_ref) mutable -> bool {
+                    for (Tag tag : tags) {
+                        cout << "tag: " << tag.tag() << endl;
+                        if (util::iequals(str, tag.tag())) {
+                            if (tag.checks().empty()) {
+                                return true;
+                            } else {
+                                for (string check : tag.checks())
+                                    if (tagged_ref(check, tagged_ref))
+                                        return false;
+                                return true;
+                            }
+                        }
+                    }
+                    return false;
+                };
+                return f(str, f);
+            };
+
+            vector<string> filtertags;
+
+            auto filtertagged = [tagged, &filtertags](vector<string> v) -> bool {
+                bool ret = false;
+                for (string str : v) {
+                    if (tagged(str)) {
+                        filtertags.push_back(str);
+                        ret = true;
+                    }
+                }
+                return ret;
+            };
+
+            // return recommended subsets of filtered menus if specified in user input
+            Items::recommend recommend = tagged("recommend") ? Items::recommend::yes : Items::recommend::no;
+
+            auto filtermenu = [&filtertags, recommend](Items::field f) {
+                cout << "filtermenu()" << endl;
+                cout << f << endl;
+                if (filtertags.size() == 1) {
+                    cout << "Here's what I found:" << endl;
+                    menu(items.filter(f, filtertags[0], recommend));
+                } else {
+                    vector<vector<Item>> filtereditems;
+                    for (string filtertag : filtertags)
+                        filtereditems.push_back(items.filter(f, filtertag, recommend));
+                    menu(merge(filtereditems));
+                }
+            };
+
+            // order confirmation after user has selected an item from menu
+            auto confirmorder = [&]() -> bool {
+                if (!session::order.item.empty()) {
+                    cout << "You have selected:" << endl;
+                    session::order.item.display();
+
+                    cout << "How many would you like to order?" << endl;
+                    
+                    while ([&]() -> bool {
+                        sentence.read(prompt());
+
+                        vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
+                        bool hasnumber = it != sentence.end();
+
+                        auto cancelorder = [&]() -> bool {
+                            sentence.read(prompt("You're removing your order. Are you sure?"));
+                            if (sentence.anyof(keys::yes)) {
+                                session::order.item.clear();
+                                cout << "Order removed." << endl;
+                                return false;
+                            }
+                            return true;
+                        };
+
+                        if (hasnumber) {
+                            if (stoi(*it) < 0) {
+                                cout << "You can't order negative items!" << endl;
+                            } else if (stoi(*it) == 0) {
+                                return cancelorder();
+                            } else {
+                                session::order.quantity = stoi(*it);
+                                cout << "You have ordered " << session::order.quantity << " x " << session::order.item.itemName() << endl;
+                                session::orders.push_back(session::order);
+                                return false;
+                            }
+                        } else {
+                            if (sentence.anyof(keys::cancel)) {
+                                return cancelorder();
+                            } else {
+                                cout << "Please give me an amount." << endl;
+                            }
+                        }
+                        return true;
+                    }());
+                }
+                return true;
+            };
+            
+            if (tagged("bye") || sentence.anyof(keys::no)) {
+                cout << "Goodbye. Have a nice day!" << endl;
+                return false;
+            }
+
+            if (sentence.anyof(keys::yes)) {
+                cout << "How can I help you?" << endl;
+                session::nowstate = state::empty;
+                return true;
+            }
+
+            if (tagged("beverage")) {
+                cout << "Here's what I found:" << endl;
+                menu(merge(items.filter(Items::field::dishType, "hot"),
+                        items.filter(Items::field::dishType, "cold")));
+                return confirmorder();
+            }
+
+            if (tagged("meat")) {
+                cout << "Here's what I found:" << endl;
+                menu(merge(vector<vector<Item>>({
+                        items.filter(Items::field::meatType, "beef"),
+                        items.filter(Items::field::meatType, "chicken"),
+                        items.filter(Items::field::meatType, "fish"),
+                        items.filter(Items::field::meatType, "seafood")})));
+                return confirmorder();
+            }
+
+            if (filtertagged(lists::stallNames)) {
+                filtermenu(Items::field::stallName);
+                return confirmorder();
+            }
+
+            if (filtertagged(lists::dishTypes)) {
+                filtermenu(Items::field::dishType);
+                return confirmorder();
+            }
+
+            if (filtertagged(lists::meatTypes)) {
+                filtermenu(Items::field::meatType);
+                return confirmorder();
+            }
+
+            if (recommend == Items::recommend::yes) {
+                filtermenu(Items::field::recommended);
+                return confirmorder();
+            }
+
+            if (tagged("vegetarian")) {
+                cout << "Here's what I found:" << endl;
+                menu(items.filter(Items::field::meatType, "none"));
+                return confirmorder();
+            }
+
+            if (tagged("cheap")) {
+                cout << "What's your budget? (Decimals not currently supported)" << endl;
+
+                while ([tagged, confirmorder]() -> bool {
+                    sentence.read(prompt());
+
+                    vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
+                    bool hasnumber = it != sentence.end();
+                    float price;
+
+                    if (sentence.anyof(keys::cancel)) {
+                        return false;
+                    } else if (hasnumber) {
+                        cout << "Here's what I found under "
+                             << fixed << setprecision(2) << stof(*it) << ":" << endl;
+                        menu(items.filter(Items::field::price, *it));
+                        confirmorder();
+                        return false;
+                    } else {
+                        cout << "Please give me an amount." << endl;
+                        return true;
+                    }
+                }());
+
+                return true;
+            }
+
+            // if "order" tag found in user input, ask for specification
+            if (tagged("order")) {
+                cout << "What would you like to do with your orders?" << endl;
+                cout << "- Make order" << endl;
+                cout << "- View orders" << endl;
+                session::nowstate = state::empty;
+                return true;
+            }
+
+            // make order session
+            if (tagged("makeorder")) {
+                cout << "Here's what we have:" << endl;
+                menu(items());
+                return confirmorder();
+            }
+
+            // view order session
+            if (tagged("vieworders")) {
+                int i = 1;
+                for (Order order : session::orders)
+                    order.list(i++);
+                sentence.read(prompt("You can edit your orders, proceed to payment, or go back."));
+                
+                // implement editorders inside
+                // if (tagged("editorders"))
+                if (sentence.contains("edit")) {
+                    i = 0;
+                    for (Order order : session::orders)
+                        order.list(i++);
+                    sentence.read(prompt("Which one would you like to edit?"));
+                    
+                    // add, deduct or remove?
+                    // 
+                }
+
+                if (!tagged("checkout"))
+                    return true; // go back to conversation
+                
+            }
+            
+            // checkout session
+            if (tagged("checkout")) {
+                // show order summary, with delivery tag
+                if (session::orders.empty()) {
+                    cout << "You haven't made any orders yet." << endl;
+                    session::nowstate = state::empty;
+                    return true;
+                }
+
+                double totalPrice = 0;
+                bool deliver = false;
+                
+                for (Order order : session::orders) {
+                    totalPrice += order.item.price() * order.quantity;
+                    if (!deliver && order.item.deliverable() == true)
+                        deliver = true;
+                }
+                
+                if (deliver == true) {
+                    sentence.read(prompt("There are foods that can be delivered. Do you want it delivered?"));
+                    if (sentence.anyof(keys::yes)){
+                        // prompt address
+                        sentence.read(prompt("Please input your address here.")); 
+                    }
+                
+                    // payment/receipt : preference for cash 
+                    int i = 1;
+                    for (Order order : session::orders)
+                        order.list(i++);
+                    cout << "Total price: " << totalPrice << endl;
+                    sentence.read(prompt("Do you want to pay with cash or card."));
+                    if (deliver == true)
+                        cout << "The food will be delivered to you once it's done cooking :)\nThank you and have a nice day." << endl;
+                    else
+                        cout << "Thanks for purchasing our meals. Have a nice day" << endl;
+                    
+                }
+                return true;
+            }
+
+            // FAQs
+            // hours of operation
+            if (tagged("operation"))
+                cout << "We are open from 8am-4pm on weekdays." << endl;
+
+            // location of cafeteria
+            if (tagged("location"))
+                cout << "Our cafeteria is located at ..." << endl;
+
+            // delivery area: klang valley, sunway, my geo sucks
+            if (tagged("delivery"))
+                cout << "Our areas of delivery are ..." << endl;
+
+            return true;
+        }());
     }
 
     catch (const exception& e) {
@@ -180,232 +493,7 @@ int main(int argc, char** argv) {
     return 0;
 }
 
-bool conversation() {
-    if (session::start) {
-        // Initial state
-        sentence.read(prompt("Hi, I'm Ken. How can I help you out today?"));
-        session::start = false;
-    } else {
-        // Subsequent state
-        sentence.read(prompt("Is there anything else I can help you with?"));
-    }
-
-    //  pseudocode
-/*  
-    - "order"
-            • replies what to order if there's no food specified
-            • show's the menu and recommendation
-    - picks food with ID(implement some type of ID system) or food name
-            • adds food to cart
-            • asks user if there's anything else to add (becomes a loop unless proceed to checkout/quit)
-    - Chooses checkout
-            • Shows order summary
-            • option to add or remove foods from cart
-            • option to confirm order
-    - Confirms order
-            • If there's food that's deliverable, asks if user wants it delivered.
-                • Prompt delivery address
-            • Sends receipt
-*/
-
-    vector<Tag> tags = sentence.parse(lists::tags);
-    
-    // includes dependent tag check processing
-    const auto tagged = [&tags](string str) -> bool {
-        auto f = [&tags](string str, auto&& tagged_ref) mutable -> bool {
-            for (Tag tag : tags)
-                if (util::iequals(str, tag.tag())) {
-                    if (tag.checks().empty()) {
-                        return true;
-                    } else {
-                        for (string check : tag.checks())
-                            if (tagged_ref(check, tagged_ref))
-                                return false;
-                        return true;
-                    }
-                }
-            return false;
-        };
-        return f(str, f);
-    };
-
-    vector<string> filtertags;
-
-    auto filtertagged = [tagged, &filtertags](vector<string> v) -> bool {
-        bool ret = false;
-        for (string str : v) {
-            if (tagged(str)) {
-                filtertags.push_back(str);
-                ret = true;
-            }
-        }
-        return ret;
-    };
-
-    auto filtermenu = [&](Items::field f) {
-        if (filtertags.size() == 1) {
-            cout << "Here's what I found:" << endl;
-            menu(items.filter(f, filtertags[0]));
-        } else {
-            vector<vector<Item>> filtereditems;
-            for (string filtertag : filtertags)
-                filtereditems.push_back(items.filter(f, filtertag));
-            menu(merge(filtereditems));
-        }
-    };
-
-    auto confirmorder = [&]() -> bool {
-        if (!session::order.item.empty()) {
-            cout << "You have selected:" << endl;
-            session::order.item.display();
-
-            cout << "How many would you like to order?" << endl;
-            
-            while ([&]() -> bool {
-                sentence.read(prompt());
-
-                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
-                bool hasnumber = it != sentence.end();
-
-                auto cancelorder = [&]() -> bool {
-                    sentence.read(prompt("You're removing your order. Are you sure?"));
-                    if (sentence.anyof(keys::yes)) {
-                        session::order.item.clear();
-                        cout << "Order removed." << endl;
-                        return false;
-                    }
-                    return true;
-                };
-
-                if (hasnumber) {
-                    if (stoi(*it) < 0) {
-                        cout << "You can't order negative items!" << endl;
-                    } else if (stoi(*it) == 0) {
-                        return cancelorder();
-                    } else {
-                        session::order.quantity = stoi(*it);
-                        cout << "You have ordered " << session::order.quantity << " x " << session::order.item.itemName() << endl;
-                        session::orders.push_back(session::order);
-                        return false;
-                    }
-                } else {
-                    if (sentence.anyof(keys::cancel)) {
-                        return cancelorder();
-                    } else {
-                        cout << "Please give me an amount." << endl;
-                    }
-                }
-                return true;
-            }());
-        }
-        return true;
-    };
-    
-    if (tagged("bye") || sentence.anyof(keys::no)) {
-        cout << "Goodbye. Have a nice day!" << endl;
-        return false;
-    }
-
-    if (sentence.anyof(keys::yes)) {
-        cout << "How can I help you?" << endl;
-        return true;
-    }
-
-    if (tagged("beverage")) {
-        cout << "Here's what I found:" << endl;
-        menu(merge(items.filter(Items::field::dishType, "hot"),
-                   items.filter(Items::field::dishType, "cold")));
-        return confirmorder();
-    }
-
-    if (filtertagged(lists::stallNames)) {
-        filtermenu(Items::field::stallName);
-        return confirmorder();
-    }
-
-    if (filtertagged(lists::dishTypes)) {
-        filtermenu(Items::field::dishType);
-        return confirmorder();
-    }
-
-    if (filtertagged(lists::meatTypes)) {
-        filtermenu(Items::field::meatType);
-        return confirmorder();
-    }
-
-    if (tagged("makeorder")) {
-        cout << "Here's what we have:" << endl;
-        menu(items());
-        return confirmorder();
-    }
-
-    if (tagged("vieworders")) {
-        int i = 1;
-        for (Order order : session::orders)
-            order.list(i++);
-        sentence.read(prompt("You can edit your orders, proceed to payment, or go back."));
-        
-        // if (tagged("editorders"))
-        tags = sentence.parse(lists::tags);
-        for (Tag t : tags)
-            cout << t.tag() << endl;
-        cout << tagged("checkout") << endl;
-        // if (!tagged("checkout"))
-        //     return true;
-            // go back to conversation
-        
-        // implement editorders inside
-    }
-    
-    if (tagged("checkout")) {
-        // show order summary, with delivery tag
-        if (session::orders.empty()) {
-            cout << "You haven't made any orders yet." << endl;
-            return true;
-        }
-
-        // if there are items that are deliverable, prompt user
-        double totalPrice = 0;
-        bool deliver = false;
-        for (Order order : session::orders) {
-            totalPrice += order.item.price() * order.quantity;
-            if (!deliver && order.item.deliverable() == true)
-                deliver = true;
-        }
-        if (deliver == true) {
-            sentence.read(prompt("There are foods that can be delivered. Do you want it delivered?"));
-            if (sentence.anyof(keys::yes)){
-                // prompt address
-                sentence.read(prompt("Please input your address here.")); 
-                cout << "Okay. The food will be delivered to you once it's done cooking :)" << endl;
-            }
-
-                // optional, delivery fees?
-                
-        
-        // payment/receipt : preference for cash 
-            int i = 1;
-            for (Order order : session::orders)
-                order.list(i++);
-            cout << "Total price: " << totalPrice << endl;
-            sentence.read(prompt("Do you want to pay with cash or card."));
-            cout << "Alright. Thanks for buying our meals." << endl;
-            
-        }
-        return true;
-    }
-
-    if (tagged("recommend")) {
-        // random recommendations
-    }
-
-    if (tagged("operation")) {
-        cout << "We are open from 8am-4pm on weekdays." << endl;
-    }
-
-    return true;
-}
-
+// prompt user input with an optional sentence printed
 string prompt(string str) {
     if (str != "")
         cout << str << endl;
@@ -415,138 +503,181 @@ string prompt(string str) {
     return response;
 }
 
-void menu(vector<Item> items) {
-    int  off, range;
-    int  cur  = 1;
-    int  tot  = (items.size() - 1) / 10 + 1;
+// function for listing items and orders
+template <class T>
+void menu(vector<T> v, T &t) {
     bool pgin = false;
+    int  cur  = 1;
+    int  tot  = (v.size() - 1) / 10 + 1;
+    int  off, range;
 
+    // lists 10 objects as a menu page
     auto menupg = [&]() {
         off = (cur - 1) * 10 + 1;
-        range = items.size() - off + 1;
-        for (int i = off; i < off + (range < 10 ? range : 10); i++) {
-            items[i - 1].list(i);
-        }
+        range = v.size() - off + 1;
+        for (int i = off; i < off + (range < 10 ? range : 10); i++)
+            v[i - 1].list(i);
         cout << "Page " << cur << "/" << tot << endl;
         pgin = false;
     };
 
-    auto iteminbounds = [&](int i) -> bool {
-        if (i < off || i >= off + (range < 10 ? range : 10)) {
-                cout << "Item not on page!" << endl;
-                return true;
-            } else {
-                session::order.item = items[i - 1];
-                return false;
-            }
-    };
- 
-    auto searchitem = [&]() -> bool {
-        vector<Item> listed = vector<Item>(items.begin() + off - 1, items.begin() + off - 1 + (range < 10 ? range : 10));
-        vector<Item> found;
-
-        // for each item on page
-        for (Item item : listed) {
-            // if sentence is found in item name
-            if (Sentence(item.itemName()).search(sentence.str()))
-                found.push_back(item);
+    // select by index
+    auto select_by_index = [&, off, range](int i) -> bool {
+        // if index is shown on page
+        if (i >= off && i < off + (range < 10 ? range : 10)) {
+            // return selection
+            t = v[i - 1];
+            return false;
+        } else {
+            cout << "Item not on page!" << endl;
+            return true;
         }
+    };
+
+    // search by name, overloaded for Item and Order classes
+    struct {
+        vector<Item> operator()(vector<Item> v) {
+            vector<Item> found;
+            // for each item on page
+            for (Item item : v) {
+                // if sentence is found in item name
+                if (Sentence(item.itemName()).search(sentence.str()))
+                found.push_back(item);
+            }
+            // return found items
+            return found; 
+        }
+        vector<Order> operator()(vector<Order> v) {
+            vector<Order> found;
+            // for each order on page
+            for (Order order : v) {
+                // if sentence is found in item name
+                if (Sentence(order.item.itemName()).search(sentence.str()))
+                found.push_back(order);
+            }
+            // return found orders
+            return found; 
+        }
+    } search;
+
+    // select by search
+    auto select_by_search = [&]() {
+        // construct vector with items on page
+        vector<T> listed = vector<T>(v.begin() + off - 1, v.begin() + off - 1 + (range < 10 ? range : 10));
+        
+        // search by name
+        vector<T> found = search(listed);
+
         if (found.size() > 1) {
+            // if multiple matches prompt user to select again
             cout << "Here's what we found:" << endl;
             menu(found);
         } else if (found.empty()) {
             cout << "Item not found!" << endl;
             return true;
         } else {   
-            session::order.item = found[0];
+            t = found[0];
         }
         return false;
     };
 
-    menupg(); // Always display first page
+    menupg(); // always display first page
 
-    if (items.size() <= 10) {
+    // one page
+    if (v.size() <= 10) {
         while ([&]() -> bool {
             sentence.read(prompt());
+
             if (sentence.anyof(keys::cancel)) {
+                // exit function
                 return false;
             } else if (sentence.anyof(keys::previous)) {
                 cout << "No previous page!" << endl;
             } else if (sentence.anyof(keys::next)) {
                 cout << "No next page!" << endl;
             } else {
-                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
-                bool number = it != sentence.end();
-
-                if (sentence.anyof(keys::page)) {
-                    if (number && stoi(*it) == 1) {
-                        menupg();
-                    } else {
-                        cout << "No other pages to go to!" << endl;
-                    }
-                } else if (number) {
-                    return iteminbounds(stoi(*it));
-                } else {
-                    return searchitem();
-                }
-            }
-            return true;
-        }());
-    } else {
-        while ([&]() -> bool {
-            sentence.read(prompt());
-            if (sentence.anyof(keys::cancel)) {
-                return false;
-            } else if (sentence.anyof(keys::previous)) {
-                if (cur != 1) {
-                    --cur;
-                    menupg();
-                } else {
-                    cout << "No previous page!" << endl;
-                }
-            } else if (sentence.anyof(keys::next)) {
-                if (cur != tot) {
-                    ++cur;
-                    menupg();
-                } else {
-                    cout << "No next page!" << endl;
-                }
-            } else {
-                auto pginbounds = [&](vector<string>::iterator it) {
-                    if (stoi(*it) < 1 || stoi(*it) > tot) {
-                        cout << "Page does not exist!" << endl;
-                        pgin = true;
-                    } else {
-                        cur = stoi(*it);
-                        menupg();
-                    }
-                };
-
+                // locate number
                 vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool hasnumber = it != sentence.end();
 
                 if (sentence.anyof(keys::page)) {
-                    if (!hasnumber) {
-                        cout << "Which page would you like to go to?" << endl;
-                        pgin = true;
+                    // if go to page 1
+                    if (hasnumber && stoi(*it) == 1) {
+                        menupg();
                     } else {
-                        pginbounds(it);
+                        cout << "No other pages to go to!" << endl;
                     }
                 } else if (hasnumber) {
-                    if (pgin) {
-                        pginbounds(it);
-                    } else {
-                        return iteminbounds(stoi(*it));
-                    }
+                    return select_by_index(stoi(*it));
                 } else {
-                    return searchitem();
+                    return select_by_search();
                 }
             }
+            // default case prompt user input again
+            return true;
+        }());
+    } else { // multiple pages
+        while ([&]() -> bool {
+            sentence.read(prompt());
+
+            if (sentence.anyof(keys::cancel)) {
+                // exit function
+                return false;
+            } else if (sentence.anyof(keys::previous)) {
+                if (cur == 1) {
+                    cout << "No previous page!" << endl;
+                } else {
+                    --cur;
+                    menupg();
+                }
+            } else if (sentence.anyof(keys::next)) {
+                if (cur == tot) {
+                    cout << "No next page!" << endl;
+                } else {
+                    ++cur;
+                    menupg();
+                }
+            } else {
+                // check if user input is within page bounds
+                auto pginbounds = [&](int i) {
+                    if (i < 1 || i > tot) {
+                        cout << "Page does not exist!" << endl;
+                        pgin = true;
+                    } else {
+                        cur = i;
+                        menupg();
+                    }
+                };
+
+                // locate number
+                vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
+                bool hasnumber = it != sentence.end();
+
+                if (sentence.anyof(keys::page)) {
+                    if (hasnumber) {
+                        pginbounds(stoi(*it));
+                    } else {
+                        cout << "Which page would you like to go to?" << endl;
+                        pgin = true;
+                    }
+                } else if (hasnumber) {
+                    // if previous query was page number
+                    if (pgin) {
+                        pginbounds(stoi(*it));
+                    } else {
+                        return select_by_index(stoi(*it));
+                    }
+                } else {
+                    return select_by_search();
+                }
+            }
+            // default case prompt user input again
             return true;
         }());
     }
 }
 
+// file validation
 ifstream init::chk_openFile(string fileName) {
     ifstream file(fileName);
     if (file.is_open()) {
@@ -557,11 +688,13 @@ ifstream init::chk_openFile(string fileName) {
     return file;
 }
 
+// adds a string to the referenced vector
 void init::generateList(string str, vector<string>& v) {
     if (!util::contains(str, v))
         v.push_back(str);
 }
 
+// unit testing
 bool test(int argc, char** argv) {
     cout << (argc > 1 ? "[TEST MODE]\n" : "");
 

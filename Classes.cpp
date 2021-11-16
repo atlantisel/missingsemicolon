@@ -19,9 +19,11 @@ Item::Item(string line) {
     getline(ss, temp, ',');
     priv.price = stod(temp);
     getline(ss, temp, ',');
-    priv.deliverable = temp == "yes" ? true : false;
+    priv.deliverable = temp == "yes";
     getline(ss, priv.dishType, ',');
     getline(ss, priv.meatType, ',');
+    getline(ss, temp, ',');
+    priv.recommended = temp == "yes";
 }
 
 string Item::stallName() {
@@ -48,6 +50,10 @@ string Item::meatType() {
     return priv.meatType;
 }
 
+bool Item::recommended() {
+    return priv.recommended;
+}
+
 bool Item::empty() {
     return priv.itemName == "";
 }
@@ -68,10 +74,10 @@ void Item::display() {
          << "Stall: " << priv.stallName << endl
          << "Type:  " << priv.dishType  << endl
          << "Meat:  " << priv.meatType  << endl
-         << "Delivery" << (priv.deliverable ? " " : " not ") << "available" << endl
-         << endl;
+         << "Delivery" << (priv.deliverable ? " " : " not ") << "available" << endl;
 }
 
+// used for display in menu page
 void Item::list(int i) {
     stringstream p;
     p << fixed << " " << setprecision(2) << priv.price;
@@ -141,6 +147,8 @@ void Sentence::clear() {
     sentence.clear();
 }
 
+// constructor for Sentence class
+// parses a string and separates the string into vector of words
 void Sentence::read(string str) {
     sentence.clear();
     sentence_string = str;
@@ -150,7 +158,6 @@ void Sentence::read(string str) {
         iss >> word;
         sentence.push_back(word);
     }
-
 
     // Remove trailing \n
     sentence.pop_back();

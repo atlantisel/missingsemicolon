@@ -30,6 +30,21 @@
     • mentioned dishes/preferences
     • mentioned area
 
+    - "order"
+            • replies what to order if there's no food specified
+            • show's the menu and recommendation
+    - picks food with ID(implement some type of ID system) or food name
+            • adds food to cart
+            • asks user if there's anything else to add (becomes a loop unless proceed to checkout/quit)
+    - Chooses checkout
+            • Shows order summary
+            • option to add or remove foods from cart
+            • option to confirm order
+    - Confirms order
+            • If there's food that's deliverable, asks if user wants it delivered.
+                • Prompt delivery address
+            • Sends receipt
+
 == tests 
 
 "Participants identify the shortcomings and improvements that can be made on the chatbot" / Scalability
