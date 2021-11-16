@@ -38,6 +38,7 @@ struct Items {
             switch (r) {
             case yes:
                 if (!item.recommended()) break;
+                
             case no:
                 res.push_back(item);
             }
@@ -106,6 +107,14 @@ struct Order {
              << item.price() << " = "
              << (quantity * item.price()) << endl;
     }
+
+    void display() {
+        item.display();
+        cout << fixed << setprecision(2)
+             << quantity << " x "
+             << item.price() << " = "
+             << (quantity * item.price()) << endl;
+    }
 };
 
 namespace lists {
@@ -115,7 +124,7 @@ namespace lists {
     vector<Tag>    tags;
 };
 
-enum state {start, empty, next};
+enum state {start, empty, next, skip};
 
 namespace session {
     state         nowstate = start;
@@ -139,8 +148,14 @@ namespace keys {
         "go", "goto", "jump", "move", "navigate", "page", "pg", "to"};
 };
 
+enum menumode {select, view};
+
 template <class T>
-void   menu  (vector<T>, T &t = session::order.item);
+void   t_menu(vector<T>, T&, string s = "", menumode mode = menumode::select);
+void   menu  (vector<Item>);
+void   menu  (vector<Item>,  Item&,  string, menumode);
+void   menu  (vector<Order>, Order&, string, menumode);
+
 string prompt(string = "");
 bool   test  (int, char**);
 
@@ -203,6 +218,11 @@ int main(int argc, char** argv) {
             case state::empty:
                 sentence.read(prompt());
                 session::nowstate = state::next;
+                break;
+
+            case state::skip:
+                session::nowstate = state::next;
+                break;
             }
 
             vector<Tag> tags = sentence.parse(lists::tags);
@@ -210,9 +230,8 @@ int main(int argc, char** argv) {
             // check for tag in user input
             // includes dependent tag check processing
             const auto tagged = [&tags](string str) -> bool {
-                auto f = [&tags](string str, auto&& tagged_ref) mutable -> bool {
+                auto f = [&tags](string str, auto &&tagged_ref) mutable -> bool {
                     for (Tag tag : tags) {
-                        cout << "tag: " << tag.tag() << endl;
                         if (util::iequals(str, tag.tag())) {
                             if (tag.checks().empty()) {
                                 return true;
@@ -231,6 +250,7 @@ int main(int argc, char** argv) {
 
             vector<string> filtertags;
 
+            // check for tags associated with filters
             auto filtertagged = [tagged, &filtertags](vector<string> v) -> bool {
                 bool ret = false;
                 for (string str : v) {
@@ -246,8 +266,6 @@ int main(int argc, char** argv) {
             Items::recommend recommend = tagged("recommend") ? Items::recommend::yes : Items::recommend::no;
 
             auto filtermenu = [&filtertags, recommend](Items::field f) {
-                cout << "filtermenu()" << endl;
-                cout << f << endl;
                 if (filtertags.size() == 1) {
                     cout << "Here's what I found:" << endl;
                     menu(items.filter(f, filtertags[0], recommend));
@@ -261,49 +279,49 @@ int main(int argc, char** argv) {
 
             // order confirmation after user has selected an item from menu
             auto confirmorder = [&]() -> bool {
-                if (!session::order.item.empty()) {
-                    cout << "You have selected:" << endl;
-                    session::order.item.display();
+                if (session::order.item.empty()) return true;
 
-                    cout << "How many would you like to order?" << endl;
-                    
-                    while ([&]() -> bool {
-                        sentence.read(prompt());
+                cout << "You have selected:" << endl;
+                session::order.item.display();
 
-                        vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
-                        bool hasnumber = it != sentence.end();
+                cout << "How many would you like to order?" << endl;
+                
+                while ([&]() -> bool {
+                    sentence.read(prompt());
 
-                        auto cancelorder = [&]() -> bool {
-                            sentence.read(prompt("You're removing your order. Are you sure?"));
-                            if (sentence.anyof(keys::yes)) {
-                                session::order.item.clear();
-                                cout << "Order removed." << endl;
-                                return false;
-                            }
-                            return true;
-                        };
+                    vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
+                    bool hasnumber = it != sentence.end();
 
-                        if (hasnumber) {
-                            if (stoi(*it) < 0) {
-                                cout << "You can't order negative items!" << endl;
-                            } else if (stoi(*it) == 0) {
-                                return cancelorder();
-                            } else {
-                                session::order.quantity = stoi(*it);
-                                cout << "You have ordered " << session::order.quantity << " x " << session::order.item.itemName() << endl;
-                                session::orders.push_back(session::order);
-                                return false;
-                            }
-                        } else {
-                            if (sentence.anyof(keys::cancel)) {
-                                return cancelorder();
-                            } else {
-                                cout << "Please give me an amount." << endl;
-                            }
+                    auto cancelorder = [&]() -> bool {
+                        sentence.read(prompt("You're removing your order. Are you sure?"));
+                        if (sentence.anyof(keys::yes)) {
+                            session::order.item.clear();
+                            cout << "Order removed." << endl;
+                            return false;
                         }
                         return true;
-                    }());
-                }
+                    };
+
+                    if (hasnumber) {
+                        if (stoi(*it) == 0) {
+                            return cancelorder();
+                        } else {
+                            session::order.quantity = stoi(*it);
+                            cout << "You have ordered " << session::order.quantity
+                                    << " x " << session::order.item.itemName() << endl;
+                            session::orders.push_back(session::order);
+                            return false;
+                        }
+                    } else {
+                        if (sentence.anyof(keys::cancel)) {
+                            return cancelorder();
+                        } else {
+                            cout << "Please give me an amount." << endl;
+                        }
+                    }
+                    return true;
+                }());
+            
                 return true;
             };
             
@@ -364,7 +382,7 @@ int main(int argc, char** argv) {
             if (tagged("cheap")) {
                 cout << "What's your budget? (Decimals not currently supported)" << endl;
 
-                while ([tagged, confirmorder]() -> bool {
+                while ([confirmorder]() -> bool {
                     sentence.read(prompt());
 
                     vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
@@ -392,6 +410,7 @@ int main(int argc, char** argv) {
             if (tagged("order")) {
                 cout << "What would you like to do with your orders?" << endl;
                 cout << "- Make order" << endl;
+                cout << "- Edit orders" << endl;
                 cout << "- View orders" << endl;
                 session::nowstate = state::empty;
                 return true;
@@ -406,26 +425,65 @@ int main(int argc, char** argv) {
 
             // view order session
             if (tagged("vieworders")) {
-                int i = 1;
-                for (Order order : session::orders)
-                    order.list(i++);
-                sentence.read(prompt("You can edit your orders, proceed to payment, or go back."));
-                
-                // implement editorders inside
-                // if (tagged("editorders"))
-                if (sentence.contains("edit")) {
-                    i = 0;
-                    for (Order order : session::orders)
-                        order.list(i++);
-                    sentence.read(prompt("Which one would you like to edit?"));
-                    
-                    // add, deduct or remove?
-                    // 
-                }
+                cout << "Here are your orders:" << endl;
+                menu(session::orders, session::order, "You can edit your orders, proceed to payment, or go back.", menumode::view);
+                session::nowstate = state::skip;
+                return true;
+            }
 
-                if (!tagged("checkout"))
-                    return true; // go back to conversation
+            if (tagged("editorders")) {
+                Order ordertoedit;
+
+                cout << "Here are your orders:" << endl;
+                menu(session::orders, ordertoedit, "Which one would you like to edit?", menumode::select);
                 
+                if (ordertoedit.item.empty()) return true;
+
+                cout << "You have selected:" << endl;
+                ordertoedit.display();
+
+                cout << "How many would you like to order?" << endl;
+
+                while ([&]() -> bool {
+                    sentence.read(prompt());
+
+                    vector<string>::iterator numit = find_if(sentence.begin(), sentence.end(), util::isnumber);
+                    bool hasnumber = numit != sentence.end();
+                    
+                    vector<Order>::iterator odrit = find_if(session::orders.begin(), session::orders.end(),
+                                                            [ordertoedit](Order order) {
+                                                                return order.item == ordertoedit.item;
+                                                            });
+
+                    auto cancelorder = [&]() -> bool {
+                        sentence.read(prompt("You're removing your order. Are you sure?"));
+                        if (sentence.anyof(keys::yes)) {
+                            session::orders.erase(odrit);
+                            cout << "Order removed." << endl;
+                            return false;
+                        }
+                        return true;
+                    };
+
+                    if (hasnumber) {
+                        if (stoi(*numit) == 0) {
+                            return cancelorder();
+                        } else {
+                            odrit->quantity = stoi(*numit);
+                            cout << "Your order is now:" << endl;
+                            odrit->display();
+                            return false;
+                        }
+                    } else {
+                        if (sentence.anyof(keys::cancel)) {
+                            return cancelorder();
+                        } else {
+                            cout << "Please give me an amount." << endl;
+                        }
+                    }
+                    return true;
+                }());
+                return true;
             }
             
             // checkout session
@@ -437,50 +495,95 @@ int main(int argc, char** argv) {
                     return true;
                 }
 
-                double totalPrice = 0;
-                bool deliver = false;
+                float totalPrice     = 0;
+                bool  deliverable    = false;
+                bool  alldeliverable = true;
                 
                 for (Order order : session::orders) {
                     totalPrice += order.item.price() * order.quantity;
-                    if (!deliver && order.item.deliverable() == true)
-                        deliver = true;
+                    order.item.deliverable() ? (deliverable = true) : (alldeliverable = false);
                 }
                 
-                if (deliver == true) {
-                    sentence.read(prompt("There are foods that can be delivered. Do you want it delivered?"));
-                    if (sentence.anyof(keys::yes)){
-                        // prompt address
-                        sentence.read(prompt("Please input your address here.")); 
-                    }
-                
-                    // payment/receipt : preference for cash 
-                    int i = 1;
-                    for (Order order : session::orders)
-                        order.list(i++);
-                    cout << "Total price: " << totalPrice << endl;
-                    sentence.read(prompt("Do you want to pay with cash or card."));
-                    if (deliver == true)
-                        cout << "The food will be delivered to you once it's done cooking :)\nThank you and have a nice day." << endl;
-                    else
-                        cout << "Thanks for purchasing our meals. Have a nice day" << endl;
-                    
+                if (alldeliverable) { // if all orders are deliverable
+                    sentence.read(prompt("Your orders can be delivered. Do you want it delivered?"));
+                    if (sentence.anyof(keys::yes))
+                        sentence.read(prompt("Please enter your address."));
+                } else if (deliverable) { // if only some orders are deliverable
+                    cout << "While some of your orders are deliverable, there are still orders that require you to pick up." << endl;
+                    cout << "We kindly request that you arrive at the canteen to pick up all of your orders." << endl;
                 }
+                
+                // final order confirmation
+                cout << "Please confirm your orders:" << endl;
+                menu(session::orders, session::order, "", menumode::view);
+                if (!sentence.anyof(keys::yes)) {
+                    cout << "Checkout cancelled." << endl;
+                    return true;
+                }
+
+                // payment
+                cout << "Your total price is " << totalPrice << "." << endl;
+                sentence.read(prompt("Do you want to pay with cash or card?"));
+
+                // card processing
+                if (sentence.anyof(vector<string>({"card", "cards", "credit", "debit"}))) {
+                    cout << "Please enter your card number." << endl;
+                    bool cancel = false;
+                    while ([&cancel]() -> bool {
+                        string in = prompt();
+
+                        if (Sentence(in).anyof(keys::cancel)) {
+                            cout << "Checkout cancelled." << endl;
+                            cancel = true;
+                            return false;
+                        }
+
+                        in.erase(remove_if(in.begin(), in.end(),
+                                           [](char c) {
+                                               return !isdigit(c);
+                                           }), in.end());
+                        
+                        if (in.empty()) {
+                            cout << "Please enter a card number." << endl;
+                        } else if (in.size() != 16) {
+                            cout << "Please enter a valid card number." << endl;
+                        } else {
+                            return false;
+                        }
+                        return true;
+                    }());
+                    if (cancel) return true;
+                }
+
+                // thank you message
+                alldeliverable
+                    ? cout << "The food will be delivered to you once it's out of the kitchen." << endl
+                    : cout << "Please remember to pick up your orders within 20-40 minutes." << endl;
+                cout << "Thank you and have a nice day. :)" << endl;
+                
                 return true;
             }
 
             // FAQs
             // hours of operation
-            if (tagged("operation"))
-                cout << "We are open from 8am-4pm on weekdays." << endl;
+            if (tagged("operation")) {
+                cout << "We are open from 8am-4pm on weekdays, closed on public holidays." << endl;
+                return true;
+            }
 
             // location of cafeteria
-            if (tagged("location"))
-                cout << "Our cafeteria is located at ..." << endl;
+            if (tagged("location")) {
+                cout << "Our cafeteria is located on our campus in Subang Jaya." << endl;
+                return true;
+            }
 
-            // delivery area: klang valley, sunway, my geo sucks
-            if (tagged("delivery"))
-                cout << "Our areas of delivery are ..." << endl;
+            // delivery area
+            if (tagged("delivery")) {
+                cout << "We currently only deliver to homes in the Klang Valley." << endl;
+                return true;
+            }
 
+            cout << "Sorry, I didn't understand that." << endl;
             return true;
         }());
     }
@@ -503,9 +606,20 @@ string prompt(string str) {
     return response;
 }
 
+void menu(vector<Item> v) {
+    t_menu(v, session::order.item);
+}
+
+void menu(vector<Item> v, Item& i, string s, menumode mode) {
+    t_menu(v, session::order.item);
+}
+
+void menu(vector<Order> v, Order& o, string s, menumode mode) {
+    t_menu(v, o, s, mode);
+}
+
 // function for listing items and orders
-template <class T>
-void menu(vector<T> v, T &t) {
+template <class T> void t_menu(vector<T> v, T &t, string s, menumode mode) {
     bool pgin = false;
     int  cur  = 1;
     int  tot  = (v.size() - 1) / 10 + 1;
@@ -518,11 +632,12 @@ void menu(vector<T> v, T &t) {
         for (int i = off; i < off + (range < 10 ? range : 10); i++)
             v[i - 1].list(i);
         cout << "Page " << cur << "/" << tot << endl;
+        if (!s.empty()) cout << s << endl;
         pgin = false;
     };
 
     // select by index
-    auto select_by_index = [&, off, range](int i) -> bool {
+    auto select_by_index = [&](int i) -> bool {
         // if index is shown on page
         if (i >= off && i < off + (range < 10 ? range : 10)) {
             // return selection
@@ -556,7 +671,7 @@ void menu(vector<T> v, T &t) {
                 found.push_back(order);
             }
             // return found orders
-            return found; 
+            return found;
         }
     } search;
 
@@ -571,7 +686,7 @@ void menu(vector<T> v, T &t) {
         if (found.size() > 1) {
             // if multiple matches prompt user to select again
             cout << "Here's what we found:" << endl;
-            menu(found);
+            menu(found, t, s, mode);
         } else if (found.empty()) {
             cout << "Item not found!" << endl;
             return true;
@@ -596,6 +711,8 @@ void menu(vector<T> v, T &t) {
             } else if (sentence.anyof(keys::next)) {
                 cout << "No next page!" << endl;
             } else {
+                if (mode == menumode::view) return false; // exit function
+
                 // locate number
                 vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                 bool hasnumber = it != sentence.end();
@@ -665,9 +782,11 @@ void menu(vector<T> v, T &t) {
                     if (pgin) {
                         pginbounds(stoi(*it));
                     } else {
+                        if (mode == menumode::view) return false; // exit function
                         return select_by_index(stoi(*it));
                     }
                 } else {
+                    if (mode == menumode::view) return false; // exit function
                     return select_by_search();
                 }
             }
@@ -677,7 +796,7 @@ void menu(vector<T> v, T &t) {
     }
 }
 
-// file validation
+// file opening validation
 ifstream init::chk_openFile(string fileName) {
     ifstream file(fileName);
     if (file.is_open()) {
@@ -688,7 +807,7 @@ ifstream init::chk_openFile(string fileName) {
     return file;
 }
 
-// adds a string to the referenced vector
+// generates initialisation lists
 void init::generateList(string str, vector<string>& v) {
     if (!util::contains(str, v))
         v.push_back(str);
@@ -765,5 +884,6 @@ bool test(int argc, char** argv) {
     default:
         cout << "Invalid argument count" << endl;
     }
+
     return true;
 }

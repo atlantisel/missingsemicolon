@@ -3,7 +3,7 @@ beverage,cold hot,beverage;beverages;drank;drink;drinking;drinks;drunk
 bread,,bread;roti
 bye,,bye;cancel;close;escape;exit;goodbye;leave;quit
 cheap,,broke;budget;budgeted;budgeting;budgets;cheap;cheaper;cheapest
-checkout,,check out;checked out;checking out;checkout;checks out;paid;pay;paying;payment;pays
+checkout,,check out;checked out;checking out;checkout;checkouts;checks out;paid;pay;paying;payment;payments;pays
 cold,,cold;colder;coldest;ice;iced;thirsty
 delivery,,deliver;delivers;delivering;delivered;deliverable
 dessert,,dessert;desserts;kuih;kuihmuih;kuihs;snack;snacked;snacking;snacks;sweet;sweets
@@ -19,7 +19,7 @@ beef,,beef;cow;cows
 fish,,fish;fishes
 seafood,,prawn;prawns;seafood;seafoods
 noodle,,noodle;noodles;soba;udon
-order,makeorder vieworders,order;ordered;ordering;orders
+order,editorders makeorder vieworders,order;ordered;ordering;orders
 recommend,cheap vegetarian,recommend;recommendation;recommendations;recommended;recommending;recommends;suggest;suggested;suggesting;suggestion;suggestions;suggests
 rice,,bento;bentos;rice
 side,,appetiser;appetisers;appetizer;appetizers;hors doeuvre;hors doeuvres;side;sides;starter;starters
@@ -27,3 +27,4 @@ soup,,soup;soups;stew;stews
 vegetarian,,dont meat;dont meats;meatless;no meat;no meats;not meat;not meats;vegetarian;vegetarians
 vieworders,,check order;check ordered;check ordering;check orders;checked order;checked ordered;checked ordering;checked orders;checking order;checking ordered;checking ordering;checking orders;checks order;checks ordered;checks ordering;checks orders;order list;order listed;order listing;order lists;ordered list;ordered listed;ordered listing;ordered lists;ordering list;ordering listed;ordering listing;ordering lists;orders list;orders listed;orders listing;orders lists;view order;view ordered;view ordering;view orders;viewed order;viewed ordered;viewed ordering;viewed orders;viewing order;viewing ordered;viewing ordering;viewing orders;views order;views ordered;views ordering;views orders
 operation,,operate;operation;open;start;
+editorders,,change;changed;changes;changing;edit;edited;editing;edits
