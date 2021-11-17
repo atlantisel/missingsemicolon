@@ -590,7 +590,7 @@ int main(int argc, char** argv) {
                 menu(session::orders, session::order, "", menumode::view);
                 while ([&]() -> bool {
                     if (sentence.anyof(keys::no) || sentence.anyof(keys::cancel)) {
-                        cout << "Checkout cancelled." << endl;\
+                        cout << "Checkout cancelled." << endl;
                         cancel = true;
                         return false;
                     } else if (!sentence.anyof(keys::yes)) {
