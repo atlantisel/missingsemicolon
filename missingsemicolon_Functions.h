@@ -5,7 +5,7 @@
 #include <cctype>       // idigit
 #include <string>
 #include <vector>
-#include "Classes.h"
+#include "missingsemicolon_Classes.h"
 
 namespace util {
     // case-insensitive comparison

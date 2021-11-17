@@ -4,8 +4,8 @@
 #include <iostream>
 #include <sstream>
 #include <string>
-#include "Classes.h"
-#include "Functions.h"
+#include "missingsemicolon_Classes.h"
+#include "missingsemicolon_Functions.h"
 
 using namespace std;
 
