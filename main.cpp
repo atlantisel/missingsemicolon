@@ -218,7 +218,7 @@ int main(int argc, char** argv) {
         while ([&]() -> bool {
             switch (session::nowstate) {
             case state::start:
-                sentence.read(prompt("Hi, I'm Ken. How can I help you out today?"));
+                sentence.read(prompt("Hi, I'm Walter. How can I help you out today?"));
                 session::nowstate = state::next;
                 break;
 
