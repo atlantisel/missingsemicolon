@@ -19,7 +19,7 @@ namespace init {
 struct Items {
     // Initialise menu
     Items() {
-        ifstream file(init::chk_openFile("Food List.csv"));
+        ifstream file(init::chk_openFile("missingsemicolon_Food List.csv"));
         string line;
         getline(file, line);
         while (getline(file, line)) {
@@ -185,7 +185,7 @@ int main(int argc, char** argv) {
         sort(lists::meatTypes.begin(),  lists::meatTypes.end());
 
         // Initialise keywords and tags
-        ifstream file(init::chk_openFile("tags.csv"));
+        ifstream file(init::chk_openFile("missingsemicolon_tags.csv"));
         string line;
         getline(file, line);
         while (getline(file, line)) {
