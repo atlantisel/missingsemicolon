@@ -918,9 +918,7 @@ template <class T> void t_menu(vector<T> v, T &t, string s, menumode mode) {
 // file opening validation
 ifstream init::chk_openFile(string fileName) {
     ifstream file(fileName);
-    if (file.is_open()) {
-        cout << fileName << " opened successfully." << endl;
-    } else {
+    if (!file.is_open()) {
         throw runtime_error("\"" + fileName + "\" cannot be opened.");
     }
     return file;
