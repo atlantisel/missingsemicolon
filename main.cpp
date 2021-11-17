@@ -103,7 +103,7 @@ struct Order {
         cout << fixed << setprecision(2)
              << right << setw(3) << i << ". "
              << item.itemName() << endl
-             << setw(7) << quantity << " x "
+             << setw(5) << "" << quantity << " x "
              << item.price() << " = "
              << (quantity * item.price()) << endl;
     }
@@ -114,6 +114,11 @@ struct Order {
              << quantity << " x "
              << item.price() << " = "
              << (quantity * item.price()) << endl;
+    }
+
+    void clear() {
+        item.clear();
+        quantity = 0;
     }
 };
 
@@ -130,12 +135,16 @@ namespace session {
     state         nowstate = start;
     Order         order;
     vector<Order> orders;
-    vector<Item>  results;
+
+    void clear() {
+        order.clear();
+        orders.clear();
+    }
 };
 
 namespace keys {
     const vector<string> yes = {
-        "affirmative", "alright", "correct", "okay", "pos", "positive", "right", "sure", "true", "y", "ya",  "yah","ye", "yeah", "yeh", "yep", "yes", "yup"};
+        "affirmative", "alright", "correct", "ok", "okay", "oke", "okeh", "okey", "pos", "positive", "right", "sure", "true", "y", "ya", "yah", "ye", "yeah", "yeh", "yep", "yes", "yup"};
     const vector<string> no = {
         "n", "nah", "neg", "negative", "neh", "nein", "no", "nop", "nope", "not", "nu"};
     const vector<string> cancel = {
@@ -146,6 +155,8 @@ namespace keys {
         "after", "forward", "forwards", "later", "next", "right"};
     const vector<string> page = {
         "go", "goto", "jump", "move", "navigate", "page", "pg", "to"};
+    const vector<string> remove = {
+        "delete", "deleted", "deletes", "deleting", "erase", "erased", "erases", "erasing", "remove", "removed", "removes", "removing"};
 };
 
 enum menumode {select, view};
@@ -292,10 +303,10 @@ int main(int argc, char** argv) {
                     vector<string>::iterator it = find_if(sentence.begin(), sentence.end(), util::isnumber);
                     bool hasnumber = it != sentence.end();
 
-                    auto cancelorder = [&]() -> bool {
+                    auto removeorder = [&]() -> bool {
                         sentence.read(prompt("You're removing your order. Are you sure?"));
                         if (sentence.anyof(keys::yes)) {
-                            session::order.item.clear();
+                            session::order.clear();
                             cout << "Order removed." << endl;
                             return false;
                         }
@@ -304,17 +315,18 @@ int main(int argc, char** argv) {
 
                     if (hasnumber) {
                         if (stoi(*it) == 0) {
-                            return cancelorder();
+                            return removeorder();
                         } else {
                             session::order.quantity = stoi(*it);
                             cout << "You have ordered " << session::order.quantity
                                     << " x " << session::order.item.itemName() << endl;
                             session::orders.push_back(session::order);
+                            session::order.clear();
                             return false;
                         }
                     } else {
                         if (sentence.anyof(keys::cancel)) {
-                            return cancelorder();
+                            return removeorder();
                         } else {
                             cout << "Please give me an amount." << endl;
                         }
@@ -325,7 +337,7 @@ int main(int argc, char** argv) {
                 return true;
             };
             
-            if (tagged("bye") || sentence.anyof(keys::no)) {
+            if (tagged("bye") || (sentence.anyof(keys::no) && !tagged("vegetarian"))) {
                 cout << "Goodbye. Have a nice day!" << endl;
                 return false;
             }
@@ -406,6 +418,25 @@ int main(int argc, char** argv) {
                 return true;
             }
 
+            // return filter categories
+            // checked for after all filter tags to prevent conflict
+            if (tagged("list")) {
+                auto list = [](vector<string> v) {
+                    for (string str : v) {
+                        cout << str;
+                        if (str != v.back()) cout << ", ";
+                    }
+                    cout << endl;
+                };
+
+                cout << "These are the categories that you can filter by:" << endl;
+                // Print lists
+                cout << "Stall names: "; list(lists::stallNames);
+                cout << "Dish types:  "; list(lists::dishTypes);
+                cout << "Meat types:  "; list(lists::meatTypes);
+                return true;
+            }
+
             // if "order" tag found in user input, ask for specification
             if (tagged("order")) {
                 cout << "What would you like to do with your orders?" << endl;
@@ -425,13 +456,24 @@ int main(int argc, char** argv) {
 
             // view order session
             if (tagged("vieworders")) {
+                if (session::orders.empty()) {
+                    cout << "You haven't made any orders yet." << endl;
+                    return true;
+                }
+
                 cout << "Here are your orders:" << endl;
                 menu(session::orders, session::order, "You can edit your orders, proceed to payment, or go back.", menumode::view);
                 session::nowstate = state::skip;
                 return true;
             }
 
+            // edit order session
             if (tagged("editorders")) {
+                if (session::orders.empty()) {
+                    cout << "You haven't made any orders yet." << endl;
+                    return true;
+                }
+
                 Order ordertoedit;
 
                 cout << "Here are your orders:" << endl;
@@ -455,7 +497,7 @@ int main(int argc, char** argv) {
                                                                 return order.item == ordertoedit.item;
                                                             });
 
-                    auto cancelorder = [&]() -> bool {
+                    auto removeorder = [&]() -> bool {
                         sentence.read(prompt("You're removing your order. Are you sure?"));
                         if (sentence.anyof(keys::yes)) {
                             session::orders.erase(odrit);
@@ -467,7 +509,7 @@ int main(int argc, char** argv) {
 
                     if (hasnumber) {
                         if (stoi(*numit) == 0) {
-                            return cancelorder();
+                            return removeorder();
                         } else {
                             odrit->quantity = stoi(*numit);
                             cout << "Your order is now:" << endl;
@@ -476,7 +518,9 @@ int main(int argc, char** argv) {
                         }
                     } else {
                         if (sentence.anyof(keys::cancel)) {
-                            return cancelorder();
+                            return false;
+                        } else if (sentence.anyof(keys::remove)) {
+                            return removeorder();
                         } else {
                             cout << "Please give me an amount." << endl;
                         }
@@ -491,23 +535,51 @@ int main(int argc, char** argv) {
                 // show order summary, with delivery tag
                 if (session::orders.empty()) {
                     cout << "You haven't made any orders yet." << endl;
-                    session::nowstate = state::empty;
                     return true;
                 }
 
                 float totalPrice     = 0;
                 bool  deliverable    = false;
                 bool  alldeliverable = true;
+                bool  deliver        = false;
+                bool  cancel         = false;
                 
                 for (Order order : session::orders) {
                     totalPrice += order.item.price() * order.quantity;
                     order.item.deliverable() ? (deliverable = true) : (alldeliverable = false);
                 }
                 
+                
                 if (alldeliverable) { // if all orders are deliverable
-                    sentence.read(prompt("Your orders can be delivered. Do you want it delivered?"));
-                    if (sentence.anyof(keys::yes))
-                        sentence.read(prompt("Please enter your address."));
+                    cout << "Your orders can be delivered. Do you want it delivered?" << endl;
+                    while ([&]() -> bool {
+                        sentence.read(prompt());
+
+                        if (sentence.anyof(keys::cancel)) {
+                            cout << "Checkout cancelled." << endl;
+                            cancel = true;
+                            return false;
+                        }
+
+                        if (sentence.anyof(keys::yes)) { 
+                            sentence.read(prompt("Please enter your address."));
+                            if (sentence.anyof(keys::cancel)) {
+                                cout << "Checkout cancelled." << endl;
+                                cancel = true;
+                                return false;
+                            }
+                            deliver = true;
+                            return false;
+                        } else if (sentence.anyof(keys::no)) {
+                            return false;
+                        } else {
+                            cout << "Please confirm (yes/no) whether you would like your orders delivered." << endl;
+                            return true;
+                        }
+                    }());
+
+                    if (cancel) return true;
+
                 } else if (deliverable) { // if only some orders are deliverable
                     cout << "While some of your orders are deliverable, there are still orders that require you to pick up." << endl;
                     cout << "We kindly request that you arrive at the canteen to pick up all of your orders." << endl;
@@ -516,51 +588,80 @@ int main(int argc, char** argv) {
                 // final order confirmation
                 cout << "Please confirm your orders:" << endl;
                 menu(session::orders, session::order, "", menumode::view);
-                if (!sentence.anyof(keys::yes)) {
-                    cout << "Checkout cancelled." << endl;
-                    return true;
-                }
+                while ([&]() -> bool {
+                    if (sentence.anyof(keys::no) || sentence.anyof(keys::cancel)) {
+                        cout << "Checkout cancelled." << endl;\
+                        cancel = true;
+                        return false;
+                    } else if (!sentence.anyof(keys::yes)) {
+                        sentence.read(prompt("Please confirm (yes/no) your orders."));
+                        return true;
+                    } else {
+                        return false;
+                    }
+                }());
+
+                if (cancel) return true;
 
                 // payment
                 cout << "Your total price is " << totalPrice << "." << endl;
-                sentence.read(prompt("Do you want to pay with cash or card?"));
+                
+                cout << "Do you want to pay with cash or card?" << endl;
 
-                // card processing
-                if (sentence.anyof(vector<string>({"card", "cards", "credit", "debit"}))) {
-                    cout << "Please enter your card number." << endl;
-                    bool cancel = false;
-                    while ([&cancel]() -> bool {
-                        string in = prompt();
+                while ([&]() -> bool {
+                    sentence.read(prompt());
 
-                        if (Sentence(in).anyof(keys::cancel)) {
-                            cout << "Checkout cancelled." << endl;
-                            cancel = true;
-                            return false;
-                        }
+                    if (sentence.anyof(keys::cancel)) {
+                        cout << "Checkout cancelled." << endl;
+                        cancel = true;
+                        return false;
+                    }
+                    
+                    // card processing
+                    if (sentence.anyof(vector<string>({"card", "cards", "credit", "debit"}))) {
+                        cout << "Please enter your card number." << endl;
+                        while ([&cancel]() -> bool {
+                            string in = prompt();
 
-                        in.erase(remove_if(in.begin(), in.end(),
-                                           [](char c) {
-                                               return !isdigit(c);
-                                           }), in.end());
-                        
-                        if (in.empty()) {
-                            cout << "Please enter a card number." << endl;
-                        } else if (in.size() != 16) {
-                            cout << "Please enter a valid card number." << endl;
-                        } else {
-                            return false;
-                        }
+                            if (Sentence(in).anyof(keys::cancel)) {
+                                cout << "Checkout cancelled." << endl;
+                                cancel = true;
+                                return false;
+                            }
+
+                            in.erase(remove_if(in.begin(), in.end(),
+                                            [](char c) {
+                                                return !isdigit(c);
+                                            }), in.end());
+                            
+                            if (in.empty()) {
+                                cout << "Please enter a card number." << endl;
+                            } else if (in.size() != 16) {
+                                cout << "Please enter a valid card number." << endl;
+                            } else {
+                                return false;
+                            }
+                            return true;
+                        }());
+                        return false;
+                    } else if (sentence.anyof(vector<string>({"bill", "bills", "cash", "note", "notes"}))) {
+                        return false;
+                    } else {
+                        cout << "Please confirm (cash/card) your preferred payment method." << endl;
                         return true;
-                    }());
-                    if (cancel) return true;
-                }
+                    }
+                }());
+
+                if (cancel) return true;
 
                 // thank you message
-                alldeliverable
+                deliver
                     ? cout << "The food will be delivered to you once it's out of the kitchen." << endl
                     : cout << "Please remember to pick up your orders within 20-40 minutes." << endl;
                 cout << "Thank you and have a nice day. :)" << endl;
                 
+                // empty menu buffer
+                session::clear();
                 return true;
             }
 
@@ -579,10 +680,26 @@ int main(int argc, char** argv) {
 
             // delivery area
             if (tagged("delivery")) {
-                cout << "We currently only deliver to homes in the Klang Valley." << endl;
+                cout << "We currently only deliver to addresses in the Klang Valley." << endl;
                 return true;
             }
 
+            // if user is lost
+            if (tagged("help")) {
+                cout << "Here's what I can do:"    << endl;
+                cout << "- Make order"             << endl;
+                cout << "- Edit orders"            << endl;
+                cout << "- View orders"            << endl;
+                cout << "- Checkout"               << endl;
+                cout << "- Meal recommendations"   << endl;
+                cout << "Or you can ask me about:" << endl;
+                cout << "- Location"               << endl;
+                cout << "- Delivery Areas"         << endl;
+                cout << "- Operation Hours"        << endl;
+                return true;
+            }
+
+            // if no match
             cout << "Sorry, I didn't understand that." << endl;
             return true;
         }());
@@ -598,8 +715,10 @@ int main(int argc, char** argv) {
 
 // prompt user input with an optional sentence printed
 string prompt(string str) {
-    if (str != "")
+    if (str != "") {
+        cout << endl;
         cout << str << endl;
+    }
     cout << ">> ";
     string response;
     getline(cin, response);

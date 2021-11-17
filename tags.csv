@@ -1,30 +1,33 @@
 tag,checks,keywords
+beef,,beef;cow;cows
 beverage,cold hot,beverage;beverages;drank;drink;drinking;drinks;drunk
 bread,,bread;roti
 bye,,bye;cancel;close;escape;exit;goodbye;leave;quit
 cheap,,broke;budget;budgeted;budgeting;budgets;cheap;cheaper;cheapest
 checkout,,check out;checked out;checking out;checkout;checkouts;checks out;paid;pay;paying;payment;payments;pays
+chicken,,chicken;chickens;poultry
 cold,,cold;colder;coldest;ice;iced;thirsty
-delivery,,deliver;delivers;delivering;delivered;deliverable
+delivery,,area;areas;deliver;delivers;deliveries;delivering;delivered;deliverable;delivery
 dessert,,dessert;desserts;kuih;kuihmuih;kuihs;snack;snacked;snacking;snacks;sweet;sweets
+editorders,,change;changed;changes;changing;edit;edited;editing;edits
+fish,,fish;fishes
+help,,help;helps;helped;helping
 hot,,hot;hotter;hottest;warm;warmer;warmest
 japanese,,asia;asian;east;eastern;japan;japanese
 korean,,asia;asian;east;eastern;korea;korean
+list,,categories;category;filter;filtered;filtering;filters;list;listed;listing;lists;stall;stalls;type;types;what food;what foods
+location,delivery,cafeteria;cafeterias;canteen;canteens;locate;located;locates;locating;location;locations;place;places;where;wheres
 makeorder,,did order;did ordered;did ordering;did orders;do order;do ordered;do ordering;do orders;made order;made ordered;made ordering;made orders;make order;make ordered;make ordering;make orders;makes order;makes ordered;makes ordering;makes orders;making order;making ordered;making ordering;making orders;place order;place ordered;place ordering;place orders;placed order;placed ordered;placed ordering;placed orders;places order;places ordered;places ordering;places orders;placing order;placing ordered;placing ordering;placing orders;want order;want ordered;want ordering;want orders;wanted order;wanted ordered;wanted ordering;wanted orders;would order;would ordered;would ordering;would orders
 malay,,malay;melayu
 mamak,,mamak;mamaks;street food;street foods
-meat,beef chicken fish seafood,meat;meats
-chicken,,chicken;chickens;poultry
-beef,,beef;cow;cows
-fish,,fish;fishes
-seafood,,prawn;prawns;seafood;seafoods
+meat,beef chicken fish seafood vegetarian,meat;meats
 noodle,,noodle;noodles;soba;udon
+operation,,hour;hours;open;opened;opening;opens;operate;operated;operates;operating;operation;operations;start;started;starting;starts
 order,editorders makeorder vieworders,order;ordered;ordering;orders
 recommend,cheap vegetarian,recommend;recommendation;recommendations;recommended;recommending;recommends;suggest;suggested;suggesting;suggestion;suggestions;suggests
 rice,,bento;bentos;rice
+seafood,,prawn;prawns;seafood;seafoods
 side,,appetiser;appetisers;appetizer;appetizers;hors doeuvre;hors doeuvres;side;sides;starter;starters
 soup,,soup;soups;stew;stews
-vegetarian,,dont meat;dont meats;meatless;no meat;no meats;not meat;not meats;vegetarian;vegetarians
+vegetarian,,dont meat;dont meats;meatless;no meat;no meats;not meat;not meats;vegetarian;vegetarians;without meat; without meats;
 vieworders,,check order;check ordered;check ordering;check orders;checked order;checked ordered;checked ordering;checked orders;checking order;checking ordered;checking ordering;checking orders;checks order;checks ordered;checks ordering;checks orders;order list;order listed;order listing;order lists;ordered list;ordered listed;ordered listing;ordered lists;ordering list;ordering listed;ordering listing;ordering lists;orders list;orders listed;orders listing;orders lists;view order;view ordered;view ordering;view orders;viewed order;viewed ordered;viewed ordering;viewed orders;viewing order;viewing ordered;viewing ordering;viewing orders;views order;views ordered;views ordering;views orders
-operation,,operate;operation;open;start;
-editorders,,change;changed;changes;changing;edit;edited;editing;edits

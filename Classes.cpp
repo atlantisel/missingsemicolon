@@ -85,7 +85,9 @@ void Item::list(int i) {
          << left  << setfill('.') << setw(45) << (priv.itemName + " ")
          << right                 << setw(6)  << p.str() << endl
                   << setfill(' ') << setw(6)  << "(" << priv.stallName
-         << " - " << priv.dishType << ")" << endl;
+         << " - " << priv.dishType << ")"
+         << (priv.deliverable ? "" : " not") << " deliverable"
+         << endl;
 }
 
 bool Item::operator==(Item item) {
